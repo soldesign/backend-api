@@ -4,36 +4,71 @@ docstring = """This is the main api which will be started by running run.sh"""
 
 import hug
 from log import log
+from db import KaranaDBWrapper
 
 log.info(docstring)
 
 
 @hug.get('/{resources}/{resource_id}/', version=1)
 def get_resource(resources: hug.types.text, resource_id: hug.types.text):
-    """This method returns either the resource with given ID or al resources"""
-    return True
+    """This method returns either the resource with given ID or all resources"""
+    if resources == 'v1': # This is necessary when resource_id is empty
+        resources = resource_id
+        resource_id = ''
+    try:
+        #KaranaDBWrapper.get_res()
+        return True
+    except Exception:
+        log.error('Couldnt get Resource for resouce ' + resources + ' with id ' + resource_id)
+        return False
 
 
 @hug.post('/{resources}/new/', version=1)
 def create_resource(resources: hug.types.text, body):
     """This method creates a resource"""
-    return True
+    if resources == 'v1':  # This is necessary when resource_id is empty
+        return False
+    try:
+        #KaranaDBWrapper.create_res()
+        return True
+    except Exception:
+        log.error('Couldnot Create Resource: ' + resources + ' with body: ' + body)
+        return False
 
 
 @hug.put('/{resources}/{resource_id}/', version=1)
 def updated_resource(resources: hug.types.text, resource_id: hug.types.text, body):
     """This method updates a resource completely"""
-    return True
+    if resources == 'v1':  # This is necessary when resource_id is empty
+        return False
+    try:
+        return True
+    except Exception:
+        log.error('Couldnot Update Resource: ' + resources + ' resource_id: ' + resource_id + ' body: ' + body)
+        return False
 
 
 @hug.patch('/{resources}/{resource_id}/', version=1)
 def modify_resource(resources: hug.types.text, resource_id: hug.types.text, body):
     """"This method modifies a resource in this case only one field allowed"""
-    return True
+    if resources == 'v1':  # This is necessary when resource_id is empty
+        return False
+    try:
+        return True
+    except Exception:
+        log.error('Couldnot Modify Resource: ' + resources + ' resource_id: ' + resource_id + ' body: ' + body)
+        return False
 
 
 @hug.delete('/{resources}/{resource_id}/', version=1)
 def delete_resource(resources: hug.types.text, resource_id: hug.types.text):
     """This method deletes a resource"""
-    return True
+    if resources == 'v1':  # This is necessary when resource_id is empty
+        return False
+    try:
+        #KaranaDBWrapper.rm_res()
+        return True
+    except Exception:
+        log.error('Couldnot Update Resource: ' + resources + ' resource_id: ' + resource_id + ' body: ' + body)
+        return False
 

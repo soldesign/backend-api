@@ -31,7 +31,7 @@ class KaranaDBWrapper(object):
         self.db = tinydb.TinyDB(__karanaDbPath__)
         self.res_schema = None
 
-    def __
+    ##def __
 
 
     def get_res_tables(self):
