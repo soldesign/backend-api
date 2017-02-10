@@ -73,14 +73,17 @@ class KaranaDBWrapper(object):
         except:
             log.error("could not update uuid index, maybe some tables or entries are broken")
 
-    def add_new_res(self, table: str, res: str):
+    def add_new_res(self, table: str, body: str):
+        
         try:
-            new_res = self.schema_index[table].loads(res)
-            if not new_res.errors:
-                self.tables[table].insert(new_res.data)
-                return new_res.data['uuid']
+            Schema_class = self.schema_index[table]
+            new_res, errors = Schema_class().loads(body)
+            userdict = dict(schema.UserSchema().dump(new_res).data)
+            self.tables[table].insert(userdict)
+            return userdict['uuid']
         except:
             log.error("resource json validation or db import error")
+            return False
 
     def get_db_dump(self):
         try:
