@@ -29,4 +29,4 @@ echo "=============== preparation done: starting application ===================
 echo "================================================================================"
 
 
-hug -f run.py
+hug -f ./src/main.py
