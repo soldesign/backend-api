@@ -72,6 +72,7 @@ class KaranaDBWrapper(object):
             new_res = self.schema_index[table].loads(res)
             if not new_res.errors:
                 self.tables[table].insert(new_res.data)
+                return new_res.data['uuid']
         except:
             log.error("resource json validation or db import error")
 
@@ -80,7 +81,10 @@ class KaranaDBWrapper(object):
             rodb = open(__karanaDbPath__, "r")
             dbdump = rodb.read()
             rodb.close()
-        return dbdump
+            return dbdump
+        except:
+            return False
+
 
     def modify_value_in_res(self, res, key, value):
         pass
