@@ -75,7 +75,6 @@ class KaranaDBWrapper(object):
 
     def add_new_res(self, table: str, res: str):
         try:
-            new_res = False
             new_res = self.schema_index[table].loads(res)
             if not new_res.errors:
                 self.tables[table].insert(new_res.data)
