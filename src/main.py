@@ -4,9 +4,10 @@ docstring = """This is the main api which will be started by running run.sh"""
 
 import hug
 from log import log
-
+import logging
+module_log = logging.getLogger(__name__)
 log.info(docstring)
-
+module_log.info('test for logger name __name__')
 
 @hug.get('/{resources}/{resource_id}/', version=1)
 def get_resource(resources: hug.types.text, resource_id: hug.types.text):

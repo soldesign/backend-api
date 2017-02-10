@@ -1,3 +1,4 @@
 hug==2.2.0
 marshmallow==2.12.2
 tinydb==3.2.2
+pyyaml

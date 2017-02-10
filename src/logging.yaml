@@ -1,0 +1,30 @@
+version: 1
+disable_existing_loggers: True
+formatters:
+    console:
+        format: "[%(asctime)s] [%(levelname)-8s] [%(name)s] --- %(message)s (%(filename)s:%(lineno)s)"
+        datefmt: "%Y-%m-%d %H:%M:%S"
+    journal:
+        format: "(%(levelname)-8s): (%(name)s) --- %(message)s (%(filename)s:%(lineno)s)"
+handlers:
+    console:
+        class: logging.StreamHandler
+        level: INFO
+        formatter: console
+        stream: ext://sys.stdout
+
+    journal:
+        class: logging.handlers.SysLogHandler
+        address: /dev/log
+        level: INFO
+        formatter: journal
+
+loggers:
+    karana_backend_api:
+        level: INFO
+        handlers: [console, journal]
+        propagate: False
+
+root:
+    level: NOTSET
+    handlers: [console]
