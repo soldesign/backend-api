@@ -19,8 +19,8 @@ def get_resource(resources: hug.types.text, resource_id: hug.types.text):
         resources = resource_id
         resource_id = ''
     try:
-        #KaranaDBWrapper.get_res()
-        return True
+
+        return str(db.get_db_dump())
     except Exception:
         log.error('Couldnt get Resource for resource: ' + resources + ' with id: ' + resource_id)
         return False
