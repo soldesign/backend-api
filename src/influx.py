@@ -85,7 +85,9 @@ class InfluxDBWrapper(object):
             log.info('Post response is: ' + str(resp.status))
             if resp.status >= 400:
                 raise Exception
-            if str(resp.read().decode('utf-8')).find('error') >= 0:
+            iserror = str(resp.read().decode('utf-8'))
+            log.debug(iserror)
+            if iserror.find('error') >= 0:
                 raise Exception
             return resp.status
         except json.JSONDecodeError:
