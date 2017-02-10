@@ -49,11 +49,11 @@ class KaranaDBWrapper(object):
         # resourceConfig[res_id]['name'] need to fit in a schema (a-z,A-Z,0-9)
         for res_table_id in resourceConfig.keys():
             log.debug('"create table instances (no overwrite)"')
-            res_table_name = resourceConfig[res_table_id]['name']
+            res_table_name = resourceConfig[res_table_id]['metadata']['name']
             self.tables[res_table_name] = self.db.table(res_table_name)
             log.debug('"overwrite metadata entry in db with the one from configuration"')
-            self.tables[res_table_name].insert(resourceConfig[res_table_name]['metadata'])
-            schema_name = resourceConfig[res_table_name]['entry_schema']
+            self.tables[res_table_name].insert(resourceConfig[res_table_id]['metadata'])
+            schema_name = resourceConfig[res_table_id]['metadata']['entry_schema']
             if schema_name in globalschemas.keys():
                 self.schema_index[res_table_name] = globalschemas[schema_name]
                 log.debug("the following schema is added to the schema_index: " + str(schema_name))
