@@ -5,6 +5,7 @@ from log import log
 import tinydb
 import sys
 import os
+from configuration import resources as resourceConfig
 
 defaultKaranaDbPath = "~/karana_db.json"
 __karanaDbPath__ = ""
@@ -30,9 +31,28 @@ class KaranaDBWrapper(object):
     def __init__(self):
         self.db = tinydb.TinyDB(__karanaDbPath__)
         self.res_schema = None
+        self.tables = {}
+        self.__uuid_index__ = {}
 
-    def
+        # sanitatized import, consistency checks and repair/migration of old databases needed
+        for res_id in resourceConfig.keys():
+            self.tables[resourceConfig[res_id]['name']] = self.db.table(resourceConfig[res_id]['name'])
+            self.tables[resourceConfig[res_id]['name']].insert(resourceConfig[res_id]['metadata'])
 
+    def update_uuid_index(self):
+        try:
+            for table in self.tables:
+                for entry in table.all()
+                    if 'uuid' in entry.keys():
+                        self.__uuid_index__[entry["uuid"]] = table[entry["uuid"]]
+        except:
+            log.error("could not update uuid index, maybe some tables or entries are broken")
+
+    def add_new_res(self, table, res):
+        pass
+
+    def modify_value_in_res(self, res, key, value):
+        pass
 
     def get_res_tables(self):
         pass
