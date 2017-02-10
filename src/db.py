@@ -75,6 +75,12 @@ class KaranaDBWrapper(object):
         except:
             log.error("resource json validation or db import error")
 
+    def get_db_dump(self):
+        try:
+            rodb = open(__karanaDbPath__, "r")
+            dbdump = rodb.read()
+            rodb.close()
+        return dbdump
 
     def modify_value_in_res(self, res, key, value):
         pass
