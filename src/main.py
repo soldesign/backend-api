@@ -32,8 +32,7 @@ def create_resource(resources: hug.types.text, body):
     if resources == 'v1':  # This is necessary when resource_id is empty
         return False
     try:
-        db.add_new_res(resources, body)
-        return True
+        return db.add_new_res(resources, body)
     except Exception:
         log.error('Couldnot Create Resource: ' + resources + ' with body: ' + body)
         return False
