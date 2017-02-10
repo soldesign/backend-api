@@ -60,7 +60,7 @@ class KaranaDBWrapper(object):
     def update_uuid_index(self):
         try:
             for table in self.tables:
-                for entry in table.all()
+                for entry in table.all():
                     if 'uuid' in entry.keys():
                         self.uuid_index[entry["uuid"]] = table[entry["uuid"]]
         except:
