@@ -4,12 +4,14 @@
 
 
 users = {'metadata': {'res_table_id': 1,\
-                      'entry_schema:' "UserSchema",\
+                      'entry_schema': "UserSchema",\
+                      'name': "users"
                      }\
         }
 
 karanas = {'metadata': {'res_table_id': 2,\
-                       'entry_schema:' "KaranaSchema",\
+                        'entry_schema': "KaranaSchema",\
+                        'name': "karanas"
                        }\
           }
 
