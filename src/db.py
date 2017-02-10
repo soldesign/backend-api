@@ -10,7 +10,7 @@ import inspect
 import schema
 
 # get the db file path
-defaultKaranaDbPath = "~/karana_db.json"
+defaultKaranaDbPath = "/tmp/karana_db.json"
 __karanaDbPath__ = ""
 
 if 'KARANA_BACKEND_DB' in os.environ.keys():
@@ -31,7 +31,7 @@ else:
 # all defined schemas in a dict
 globalschemas = {}
 for name, obj in inspect.getmembers(schema):
-    globalschemas[name]=obj()
+    globalschemas[name]=obj
 
 class KaranaDBWrapper(object):
     ''' Karana DB Wrapper'''
