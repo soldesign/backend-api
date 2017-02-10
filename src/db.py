@@ -56,6 +56,13 @@ class KaranaDBWrapper(object):
             schema_name = resourceConfig[res_table_name]['entry_schema']
             if schema_name in globalschemas.keys():
                 self.schema_index[res_table_name] = globalschemas[schema_name]
+                log.debug("the following schema is added to the schema_index: " + str(schema_name))
+            else:
+                log.error("The following schema with the schema_name: '" + \
+                          str(schema_name) + \
+                          "' from the configuration is not implemented! \n" +  \
+                          "Only on of the following schemas are defined: " +
+                          str(globalschemas))
 
     def update_uuid_index(self):
         try:
@@ -68,7 +75,6 @@ class KaranaDBWrapper(object):
 
     def add_new_res(self, table: str, res: str):
         try:
-            new_res = False
             new_res = self.schema_index[table].loads(res)
             if not new_res.errors:
                 self.tables[table].insert(new_res.data)
