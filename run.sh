@@ -29,8 +29,4 @@ echo "=============== preparation done: starting application ===================
 echo "================================================================================"
 
 
-<<<<<<< HEAD
-hug -f ./src/main.py
-=======
 hug -f src/main.py
->>>>>>> 577a0ab2106414b579be1500a8e2bdc478a390a0
