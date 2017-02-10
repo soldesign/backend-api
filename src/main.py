@@ -19,7 +19,7 @@ def get_resource(resources: hug.types.text, resource_id: hug.types.text):
         #KaranaDBWrapper.get_res()
         return True
     except Exception:
-        log.error('Couldnt get Resource for resouce ' + resources + ' with id ' + resource_id)
+        log.error('Couldnt get Resource for resource: ' + resources + ' with id: ' + resource_id)
         return False
 
 
