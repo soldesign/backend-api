@@ -32,19 +32,21 @@ class KaranaDBWrapper(object):
         self.db = tinydb.TinyDB(__karanaDbPath__)
         self.res_schema = None
         self.tables = {}
-        if "uuid_index" not in self.db.tables():
-            self.__uuid_index__ = {}
+        self.__uuid_index__ = {}
 
-        # sanitation old databases needed
+        # sanitatized import, consistency checks and repair/migration of old databases needed
         for res_id in resourceConfig.keys():
             self.tables[resourceConfig[res_id]['name']] = self.db.table(resourceConfig[res_id]['name'])
             self.tables[resourceConfig[res_id]['name']].insert(resourceConfig[res_id]['metadata'])
 
-
     def update_uuid_index(self):
-        for table in self.tables:
-            pass
-        pass
+        try:
+            for table in self.tables:
+                for entry in table.all()
+                    if 'uuid' in entry.keys():
+                        self.__uuid_index__[entry["uuid"]] = table[entry["uuid"]]
+        except:
+            log.error("could not update uuid index, maybe some tables or entries are broken")
 
     def add_new_res(self, table, res):
         pass
