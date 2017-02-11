@@ -49,10 +49,10 @@ class KaranaDBWrapper(object):
         self.tables = self.main_state['tables']
         self.uuid_index = {}
         self.schema_index = {}
-        self.__prepare_state__()
+        self.__import_state_from_db__()
         self.__uniqueness_index__ = {}
 
-    def __prepare_state__(self):
+    def __import_state_from_db__(self):
         # sanitatized import, consistency checks and repair/migration of old databases needed
         # resourceConfig[res_id]['name'] need to fit in a schema (a-z,A-Z,0-9)
         for res_table_id in resourceConfig.keys():
@@ -78,6 +78,9 @@ class KaranaDBWrapper(object):
             if res_table_name in self.db.tables():
                 db_table = self.db.table(res_table_name)
                 db_table_state = db_table.all()
+                log.debug("go through all entries in table: '"+\
+                          str(res_table_name) +\
+                          "' and try to import it to the internal table representation")
                 for entry in db_table_state:
                     if len(entry) == 1:
                         try:
@@ -97,7 +100,7 @@ class KaranaDBWrapper(object):
                                       str(entry) + \
                                       "'.\nIt will not be imported!")
                             break
-                        #import it
+                        #try to import it
                         try:
                             validated_entry = table_schema(strict=True).loads(entry).data
                             self.tables[res_table_name] = dict(validated_entry)
@@ -140,7 +143,7 @@ class KaranaDBWrapper(object):
             new_res, errors = Schema_class().loads(body)
             userdict = dict(Schema_class().dump(new_res).data)
             ### unique field check
-            self.tables[table].insert(userdict)
+            self.tables[table][userdict['uuid'] = userdict
             return userdict['uuid']
         except:
             log.error("resource json validation or db import error")
