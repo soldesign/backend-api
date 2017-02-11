@@ -49,10 +49,10 @@ class KaranaDBWrapper(object):
         self.tables = self.main_state['tables']
         self.uuid_index = {}
         self.schema_index = {}
-        self.__prepare_state__()
+        self.__import_state_from_db__()
         self.__uniqueness_index__ = {}
 
-    def __prepare_state__(self):
+    def __import_state_from_db__(self):
         # sanitatized import, consistency checks and repair/migration of old databases needed
         # resourceConfig[res_id]['name'] need to fit in a schema (a-z,A-Z,0-9)
         for res_table_id in resourceConfig.keys():
