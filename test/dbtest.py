@@ -11,7 +11,7 @@ myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(myPath, '../src'))
 from influx import DBHTTPSetup
 # from seed import user1
-body = '{"name":"Micha","role":"admin","email":"mica@all.de"}'
+body = '{"data":"{"name":"Micha","role":"admin","email":"mic@all.de"}"}'
 command = ['bash', './run.sh']
 # process = subprocess.Popen(command)
 # process.wait(timeout=None)

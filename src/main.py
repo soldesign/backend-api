@@ -30,22 +30,23 @@ def get_resource(resources: hug.types.text, resource_id: hug.types.text, respons
 
 
 @hug.post('/{resources}/new/', version=1)
-def create_resource(resources: hug.types.text, body):
+def create_resource(resources: hug.types.text, data):
     """This method creates a resource"""
+    log.debug("Incoming data is_ " + str(data))
     if resources == 'v1':  # This is necessary when resource_id is empty
         return False
     try:
-        resp = db.add_new_res(resources, body)
+        resp = db.add_new_res(resources, str(data))
         if resp:
             return str(resp)
         raise
     except:
-        log.error('Could not Create Resource: ' + resources + ' with body: ' + str(body))
+        log.error('Could not Create Resource: ' + resources + ' with data: ' + str(data))
         raise falcon.HTTPBadRequest('Create Resource Error', 'Failed to create new Resource')
 
 
 @hug.put('/{resources}/{resource_id}/', version=1)
-def updated_resource(resources: hug.types.text, resource_id: hug.types.text, body):
+def updated_resource(resources: hug.types.text, resource_id: hug.types.text, data):
     """This method updates a resource completely"""
     if resources == 'v1':  # This is necessary when resource_id is empty
         return False
@@ -55,12 +56,12 @@ def updated_resource(resources: hug.types.text, resource_id: hug.types.text, bod
             return str(resp)
         raise
     except:
-        log.error('Could not update Resource: ' + resources + ' with body: ' + str(body))
+        log.error('Could not update Resource: ' + resources + ' with data: ' + str(data))
         raise falcon.HTTPBadRequest('Update Resource Error', 'Failed to update Resource')
 
 
 @hug.patch('/{resources}/{resource_id}/', version=1)
-def modify_resource(resources: hug.types.text, resource_id: hug.types.text, body):
+def modify_resource(resources: hug.types.text, resource_id: hug.types.text, data):
     """"This method modifies a resource in this case only one field allowed"""
     if resources == 'v1':  # This is necessary when resource_id is empty
         return False
@@ -70,7 +71,7 @@ def modify_resource(resources: hug.types.text, resource_id: hug.types.text, body
             return str(resp)
         raise
     except:
-        log.error('Could not modify Resource: ' + resources + ' with body: ' + str(body))
+        log.error('Could not modify Resource: ' + resources + ' with data: ' + str(data))
         raise falcon.HTTPBadRequest('Modify Resource Error', 'Failed to modify Resource')
 
 

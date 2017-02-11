@@ -59,14 +59,16 @@ class KaranaDBWrapper(object):
             log.debug("create table instances ")
             log.debug("pull res_table_name and schema_name from the config")
             res_table_name = resourceConfig[res_table_id]['metadata']['name']
-            schema_name = resourceConfig[res_table_id]['metadata']['entry_import_schema']
+            schema_import_name = resourceConfig[res_table_id]['metadata']['entry_import_schema']
+            schema_create_name = resourceConfig[res_table_id]['metadata']['entry_create_schema']
             log.debug("try to find the schema for this table as mentioned in the config.")
-            if schema_name in globalschemas.keys():
-                self.schema_index[res_table_name] = globalschemas[schema_name]
-                log.debug("the following schema is added to the schema_index: " + str(schema_name))
+            if schema_import_name in globalschemas.keys():
+                self.schema_index[res_table_name + '_import'] = globalschemas[schema_import_name]
+                self.schema_index[res_table_name + '_create'] = globalschemas[schema_create_name]
+                log.debug("the following schema is added to the schema_index: " + str(schema_import_name))
             else:
-                log.error("Major error, the configuration is corrupted!\nThe following schema with the schema_name: '" + \
-                          str(schema_name) + \
+                log.error("Major error, the configuration is corrupted!\nThe following schema with the schema_import_name: '" + \
+                          str(schema_import_name) + \
                           "' from the configuration is not implemented! \n" +  \
                           "Only on of the following schemas are defined: " +
                           str(globalschemas) + \
@@ -74,7 +76,7 @@ class KaranaDBWrapper(object):
                 sys.exit(1)
 
             self.tables[res_table_name] = {}
-            table_schema = self.schema_index[res_table_name]
+            table_schema = self.schema_index[res_table_name + '_import']
             if res_table_name in self.db.tables():
                 db_table = self.db.table(res_table_name)
                 db_table_state = db_table.all()
@@ -139,13 +141,14 @@ class KaranaDBWrapper(object):
     def add_new_res(self, table: str, body: str):
 
         try:
-            Schema_class = self.schema_index[table]
-            new_res, errors = Schema_class().loads(body)
+            Schema_class = self.schema_index[table + '_create']
+            new_res, errors = Schema_class(strict=True).loads(body)
             userdict = dict(Schema_class().dump(new_res).data)
             ### unique field check
             self.tables[table][userdict['uuid']] = userdict
+            log.debug('Main State: ' + str(self.main_state))
             return userdict['uuid']
-        except:
+        except Exception as e:
             log.error("resource json validation or db import error")
             return False
 
