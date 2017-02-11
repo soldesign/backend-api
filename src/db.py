@@ -62,10 +62,10 @@ class KaranaDBWrapper(object):
             schema_import_name = resourceConfig[res_table_id]['metadata']['entry_import_schema']
             schema_create_name = resourceConfig[res_table_id]['metadata']['entry_create_schema']
             log.debug("try to find the schema for this table as mentioned in the config.")
-            if schema_import_name in globalschemas.keys():
+            if schema_import_name in globalschemas.keys() and schema_create_name in globalschemas.keys():
                 self.schema_index[res_table_name + '_import'] = globalschemas[schema_import_name]
                 self.schema_index[res_table_name + '_create'] = globalschemas[schema_create_name]
-                log.debug("the following schema is added to the schema_index: " + str(schema_import_name))
+                log.debug("the following schema is added to the schema_index: " + str(schema_import_name) + " and " + schema_create_name)
             else:
                 log.error("Major error, the configuration is corrupted!\nThe following schema with the schema_import_name: '" + \
                           str(schema_import_name) + \
