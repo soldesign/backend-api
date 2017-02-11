@@ -5,13 +5,15 @@
 
 users = {'metadata': {'res_table_id': 1,\
                       'entry_schema': "UserSchema",\
-                      'name': "users"
+                      'name': "users",\
+                      'unique_schema_fields': ['uuid', 'email']
                      }\
         }
 
 karanas = {'metadata': {'res_table_id': 2,\
                         'entry_schema': "KaranaSchema",\
-                        'name': "karanas"
+                        'name': "karanas",\
+                        'unique_schema_fields': []
                        }\
           }
 
