@@ -26,7 +26,9 @@ def test_create_user():
 
 def test_inser_as_user():
     assert Wrapper.insert_config('testdb', 'config', '123', 'testuser', 'testpw')
+    assert not Wrapper.insert_config('testdb', 'config', '123', 'testuser', 'testp')
     assert Wrapper.get_config('testdb', '123', 'testuser', 'testpw') == 'config'
+    assert not Wrapper.get_config('testdb', '123', 'testuser', 'testp') == 'config'
 
 
 def test_remove_all():
