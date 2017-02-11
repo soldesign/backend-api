@@ -9,9 +9,20 @@ karana2 = '{"name": "KaranaGiga", "note": "This is Michas second karana"}'
 karana3 = '{"name": "KaranaFantastic", "note": "This is Daniels first karana"}'
 
 
-seed = dict(user=[dict(schema.UserSchema().dump(schema.UserSchema().loads(user2).data).data),
-                  dict(schema.UserSchema().dump(schema.UserSchema().loads(user2).data).data)],
-            karana=[dict(schema.KaranaSchema().dump(schema.KaranaSchema().loads(karana1).data).data),
-                    dict(schema.KaranaSchema().dump(schema.KaranaSchema().loads(karana2).data).data),
-                    dict(schema.KaranaSchema().dump(schema.KaranaSchema().loads(karana3).data).data)]
+user1 = schema.UserSchema().loads(user1).data
+user2 = schema.UserSchema().loads(user2).data
+
+karana1 = schema.KaranaSchema().loads(karana1).data
+karana2 = schema.KaranaSchema().loads(karana2).data
+karana3 = schema.KaranaSchema().loads(karana3).data
+
+user1.karanas.append(karana1)
+user1.karanas.append(karana2)
+user2.karanas.append(karana3)
+
+seed = dict(user=[dict(schema.UserSchema().dump(user1).data),
+                  dict(schema.UserSchema().dump(user2).data)],
+            karana=[dict(schema.KaranaSchema().dump(karana1).data),
+                    dict(schema.KaranaSchema().dump(karana2).data),
+                    dict(schema.KaranaSchema().dump(karana3).data)]
             )

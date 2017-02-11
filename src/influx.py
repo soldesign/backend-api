@@ -23,9 +23,9 @@ class DBHTTPSetup(object):
         self.log.info('Setup Connection')
         parser = self.__get_parser__()
         try:
-            return http.client.HTTPSConnection(parser.get('influxdb', 'host') + ':' + parser.get('influxdb', 'port'))
+            return http.client.HTTPSConnection(parser.get(self.db, 'host') + ':' + parser.get(self.db, 'port'))
         except Exception:
-            self.log.error('The http connection to the influx instance could not be instanciated')
+            self.log.error('The http connection to the host: ' + self.db + ' instance could not be instanciated')
             return None
 
     def __get_header__(self, user=None, password=None, content_type="application/x-www-form-urlencoded"):
@@ -78,15 +78,15 @@ class InfluxDBWrapper(DBHTTPSetup):
         resp = self.__send_post_request__('_internal', 'drop+user+' + name)
         return resp < 300
 
-    def insert_config(self, db, config, karana_id, user=None, password=None):
+    def insert_timepoint(self, db, timeseries, config, karana_id, user=None, password=None):
         """This method inserts a config into the influx db with the karana id, note there is no style checing
         for the config!"""
-        resp = self.__send_insert_request__(db, 'config,data=' + config + ',id=' + karana_id + ' v=0', user, password)
+        resp = self.__send_insert_request__(db, timeseries + ',data=' + config + ',id=' + karana_id + ' v=0', user, password)
         return resp == 204
 
-    def get_config(self, db, karana_id, user=None, password=None):
+    def get_last_timepoint(self, db, timeseries, karana_id, user=None, password=None):
         """This method returns the last config for a certain karana id"""
-        resp = self.__send_get_request__(db, "select+last(*),data+from+config+where+id='" + karana_id + "'", user, password)
+        resp = self.__send_get_request__(db, "select+last(*),data+from+" + timeseries + "+where+id='" + karana_id + "'", user, password)
         if resp:
             self.log.debug('config is: ' + str(resp))
             index = resp['results'][0]['series'][0]['columns'].index('data')

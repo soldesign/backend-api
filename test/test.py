@@ -16,8 +16,8 @@ def test_influx_create_db():
     assert Wrapper.create_db('testdb')
 
 def test_insert_as_admin():
-    assert Wrapper.insert_config('testdb', 'config', '123')
-    assert Wrapper.get_config('testdb', '123') == 'config'
+    assert Wrapper.insert_timepoint('testdb', 'check', 'config', '123')
+    assert Wrapper.get_last_timepoint('testdb', 'check', '123') == 'config'
 
 
 def test_create_user():
@@ -27,10 +27,10 @@ def test_create_user():
 
 
 def test_inser_as_user():
-    assert Wrapper.insert_config('testdb', 'config', '123', 'testuser', 'testpw')
-    assert not Wrapper.insert_config('testdb', 'config', '123', 'testuser', 'testp')
-    assert Wrapper.get_config('testdb', '123', 'testuser', 'testpw') == 'config'
-    assert not Wrapper.get_config('testdb', '123', 'testuser', 'testp') == 'config'
+    assert Wrapper.insert_timepoint('testdb', 'check', 'config', '123', 'testuser', 'testpw')
+    assert not Wrapper.insert_timepoint('testdb', 'check', 'config', '123', 'testuser', 'testp')
+    assert Wrapper.get_last_timepoint('testdb', 'check', '123', 'testuser', 'testpw') == 'config'
+    assert not Wrapper.get_last_timepoint('testdb', 'check', '123', 'testuser', 'testp') == 'config'
 
 
 def test_remove_all():
