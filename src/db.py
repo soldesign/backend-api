@@ -4,9 +4,11 @@ docstring='''db wrapper for the karana backend api'''
 from log import log
 import tinydb
 import os
+import sys
 from configuration import resources as resourceConfig
 import inspect
 import schema
+
 
 # get the db file path
 defaultKaranaDbPath = "/tmp/karana_db.json"
@@ -51,9 +53,25 @@ class KaranaDBWrapper(object):
         # sanitatized import, consistency checks and repair/migration of old databases needed
         # resourceConfig[res_id]['name'] need to fit in a schema (a-z,A-Z,0-9)
         for res_table_id in resourceConfig.keys():
-            log.debug('"create table instances (no overwrite)"')
+            log.debug("create table instances ")
+            log.debug("pull res_table_name and schema_name from the config")
             res_table_name = resourceConfig[res_table_id]['metadata']['name']
+            schema_name = resourceConfig[res_table_id]['metadata']['entry_schema']
+            log.debug("try to find the schema for this table as mentioned in the config.")
+            if schema_name in globalschemas.keys():
+                self.schema_index[res_table_name] = globalschemas[schema_name]
+                log.debug("the following schema is added to the schema_index: " + str(schema_name))
+            else:
+                log.error("Major error, the configuration is corrupted!\nThe following schema with the schema_name: '" + \
+                          str(schema_name) + \
+                          "' from the configuration is not implemented! \n" +  \
+                          "Only on of the following schemas are defined: " +
+                          str(globalschemas) + \
+                          "\nThe service ist stopped, repair the configuration and restart it.")
+                sys.exit(1)
+
             self.tables[res_table_name] = {}
+            table_schema = self.schema_index[res_table_name]
             if res_table_name in self.db.tables():
                 db_table = self.db.table(res_table_name)
                 db_table_state = db_table.all()
@@ -82,18 +100,9 @@ class KaranaDBWrapper(object):
                         log.warning("A malformed entry was found in the db table: '" +\
                                     res_table_name + \
                                     "'."))
-            log.debug('"overwrite metadata entry in db with the one from configuration"')
-            self.tables[res_table_name].insert(resourceConfig[res_table_id]['metadata'])
-            schema_name = resourceConfig[res_table_id]['metadata']['entry_schema']
-            if schema_name in globalschemas.keys():
-                self.schema_index[res_table_name] = globalschemas[schema_name]
-                log.debug("the following schema is added to the schema_index: " + str(schema_name))
-            else:
-                log.error("The following schema with the schema_name: '" + \
-                          str(schema_name) + \
-                          "' from the configuration is not implemented! \n" +  \
-                          "Only on of the following schemas are defined: " +
-                          str(globalschemas))
+            #log.debug('"overwrite metadata entry in db with the one from configuration"')
+            #self.tables[res_table_name].insert(resourceConfig[res_table_id]['metadata'])
+
 
     def __push_deb__(self):
         pass
