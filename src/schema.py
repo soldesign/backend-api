@@ -3,7 +3,10 @@ import datetime as dt
 import uuid
 import random
 import string
-from marshmallow import Schema, fields, post_load
+from marshmallow import Schema
+from marshmallow import fields
+from marshmallow import post_load
+from marshmallow import validate
 
 
 def id_generator(size=16, chars=string.ascii_uppercase + string.digits):
@@ -43,11 +46,21 @@ class UserSchema(Schema):
     credentials = fields.Dict()
     created_at = fields.DateTime(dump_only=True)
     role = fields.Str(required=True)
-    karanas = fields.Nested('KaranaSchema', many=True, exclude=('user', 'note', 'created_at'))
+    #karanas = fields.Nested('KaranaSchema', many=True, exclude=('user', 'note', 'created_at'))
+    karanas = fields.List(fields.UUID(), validate=validate.Length(max=1000))
 
     @post_load
     def make_user(self, data):
         return User(**data)
+
+
+class UserDbSchema(Schema):
+    uuid = fields.UUID(required=True)
+    name = fields.Str(required=True)
+    email = fields.Email(required=True)
+    created_at = fields.DateTime(required=True) # should be in unix epoch time
+    role = fields.Str(required=True) # should be a OneOf from a list in config
+    karanas = fields.List(fields.UUID(), validate=validate.Length(max=1000), required=True) # should be a OneOf from a list of karanas
 
 
 class KaranaSchema(Schema):
@@ -56,8 +69,17 @@ class KaranaSchema(Schema):
     note = fields.Str()
     credentials = fields.Dict()
     created_at = fields.DateTime(dump_only=True)
-    user = fields.Nested('UserSchema', only=["uuid", "email"], required=True)
+    #user = fields.Nested('UserSchema', only=["uuid", "email"], required=True)
+    owner = fields.UUID(required=True) # should be a OneOf from a list of users
 
     @post_load
     def make_karana(self, data):
         return Karana(**data)
+
+
+class KaranaDbSchema(Schema):
+    uuid = fields.UUID(required=True)
+    name = fields.Str(required=True, validate=)
+    note = fields.Str(required=)
+    created_at = fields.DateTime(dump_only=True)
+    owner = fields.UUID(required=True) # should be a OneOf from a list of users

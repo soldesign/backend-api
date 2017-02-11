@@ -4,14 +4,16 @@
 
 
 users = {'metadata': {'res_table_id': 1,\
-                      'entry_schema': "UserSchema",\
+                      'entry_create_schema': "UserSchema",\
+                      'entry_import_schema': "UserDbSchema",\
                       'name': "users",\
                       'unique_schema_fields': ['uuid', 'email']
                      }\
         }
 
 karanas = {'metadata': {'res_table_id': 2,\
-                        'entry_schema': "KaranaSchema",\
+                        'entry_create_schema': "KaranaSchema",\
+                        'entry_import_schema': "KaranaDbSchema",\
                         'name': "karanas",\
                         'unique_schema_fields': []
                        }\

@@ -8,6 +8,7 @@ import sys
 from configuration import resources as resourceConfig
 import inspect
 import schema
+import json
 
 
 # get the db file path
@@ -34,6 +35,8 @@ globalschemas = {}
 for name, obj in inspect.getmembers(schema):
     globalschemas[name]=obj
 
+log.debug("List of all implemented schemas: " + str(globalschemas.keys()))
+
 
 class KaranaDBWrapper(object):
     ''' Karana DB Wrapper'''
@@ -56,7 +59,7 @@ class KaranaDBWrapper(object):
             log.debug("create table instances ")
             log.debug("pull res_table_name and schema_name from the config")
             res_table_name = resourceConfig[res_table_id]['metadata']['name']
-            schema_name = resourceConfig[res_table_id]['metadata']['entry_schema']
+            schema_name = resourceConfig[res_table_id]['metadata']['entry_import_schema']
             log.debug("try to find the schema for this table as mentioned in the config.")
             if schema_name in globalschemas.keys():
                 self.schema_index[res_table_name] = globalschemas[schema_name]
@@ -78,7 +81,15 @@ class KaranaDBWrapper(object):
                 for entry in db_table_state:
                     if len(entry) == 1:
                         try:
-                            entry = dict(entry)
+                            if dict(entry).keys()[0] == 'metadata':
+                                try:
+                                    self.tables[res_table_name]['metadata'] = dict(entry)
+                                except:
+                                    log.error("could not load 'metadata' field from config/db.")
+                                    sys.exit(1)
+                                continue
+                            else:
+                                entry = json.dumps(dict(entry))
                         except:
                             log.error("The following entry in the table '" + \
                                       str(res_table_name) + \
@@ -88,9 +99,13 @@ class KaranaDBWrapper(object):
                             break
                         #import it
                         try:
-                            pass
+                            validated_entry = table_schema(strict=True).loads(entry).data
+                            self.tables[res_table_name] = dict(validated_entry)
+                            continue
                         except:
-                            pass
+                            log.error("could not import the following entry: '" + \
+                                      str(entry) + \
+                                      "'.")
 
                     elif len(entry) == 0:
                         log.warning("An empty entry was found and ignored in the db (table: '" +\
@@ -100,9 +115,6 @@ class KaranaDBWrapper(object):
                         log.warning("A malformed entry was found in the db table: '" +\
                                     res_table_name + \
                                     "'.")
-            #log.debug('"overwrite metadata entry in db with the one from configuration"')
-            #self.tables[res_table_name].insert(resourceConfig[res_table_id]['metadata'])
-
 
     def __push_deb__(self):
         pass
