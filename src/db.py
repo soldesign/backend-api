@@ -149,7 +149,7 @@ class KaranaDBWrapper(object):
             log.debug('Main State: ' + str(self.main_state))
             return userdict['uuid']
         except Exception as e:
-            log.error("resource json validation or db import error")
+            log.error("resource json validation or db import error", e)
             return False
 
     def get_db_dump(self):

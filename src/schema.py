@@ -28,13 +28,13 @@ class User(object):
 
 
 class Karana(object):
-    def __init__(self, name, note, user):
+    def __init__(self, name,  owner, note=''):
         self.uuid = uuid.uuid4()
         self.name = name
         self.credentials = {"password": id_generator()}
         self.note = note
         self.created_at = dt.datetime.now()
-        self.user = user
+        self.owner = owner
 
 ##################################### Schemas ##################################################
 
