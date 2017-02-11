@@ -79,7 +79,7 @@ class KaranaSchema(Schema):
 
 class KaranaDbSchema(Schema):
     uuid = fields.UUID(required=True)
-    name = fields.Str(required=True, validate=)
-    note = fields.Str(required=)
+    name = fields.Str(required=True)
+    note = fields.Str(required=True)
     created_at = fields.DateTime(dump_only=True)
     owner = fields.UUID(required=True) # should be a OneOf from a list of users

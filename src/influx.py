@@ -18,12 +18,15 @@ class DBHTTPSetup(object):
         parser.read('config.ini')
         return parser
 
-    def __conn_setup__(self):
+    def __conn_setup__(self,ssl=True):
         """This establishes a connection to influxDB which can be used to send requests to the influxdb instance"""
         self.log.info('Setup Connection')
         parser = self.__get_parser__()
         try:
-            return http.client.HTTPSConnection(parser.get(self.db, 'host') + ':' + parser.get(self.db, 'port'))
+            if ssl:
+                return http.client.HTTPSConnection(parser.get(self.db, 'host') + ':' + parser.get(self.db, 'port'))
+            elif not ssl:
+                return http.client.HTTPConnection(parser.get(self.db, 'host') + ':' + parser.get(self.db, 'port'))
         except Exception:
             self.log.error('The http connection to the host: ' + self.db + ' instance could not be instanciated')
             return None

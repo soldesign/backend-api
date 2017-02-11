@@ -16,12 +16,12 @@ command = ['bash', './run.sh']
 # process = subprocess.Popen(command)
 # process.wait(timeout=None)
 TestHTTP = DBHTTPSetup(db='test')
-client = TestHTTP.__conn_setup__()
-header = TestHTTP.__get_header__()
+client = TestHTTP.__conn_setup__(ssl=False)
+header = TestHTTP.__get_header__(content_type="application/json")
 
 # http://127.0.0.1:8000/v1/users/new body='{"name":"Micha","role":"admin","email":"mica@all.de"}'
 
 def test1():
-    client.request("POST", "/v1/users/new/", body)
+    client.request("POST", "/v1/users/new/", body, header)
     resp = client.getresponse()
     assert resp.status < 300

@@ -40,7 +40,7 @@ def create_resource(resources: hug.types.text, body):
             return str(resp)
         raise
     except:
-        log.error('Could not Create Resource: ' + resources + ' with body: ' + body)
+        log.error('Could not Create Resource: ' + resources + ' with body: ' + str(body))
         raise falcon.HTTPBadRequest('Create Resource Error', 'Failed to create new Resource')
 
 
@@ -55,7 +55,7 @@ def updated_resource(resources: hug.types.text, resource_id: hug.types.text, bod
             return str(resp)
         raise
     except:
-        log.error('Could not update Resource: ' + resources + ' with body: ' + body)
+        log.error('Could not update Resource: ' + resources + ' with body: ' + str(body))
         raise falcon.HTTPBadRequest('Update Resource Error', 'Failed to update Resource')
 
 
@@ -70,7 +70,7 @@ def modify_resource(resources: hug.types.text, resource_id: hug.types.text, body
             return str(resp)
         raise
     except:
-        log.error('Could not modify Resource: ' + resources + ' with body: ' + body)
+        log.error('Could not modify Resource: ' + resources + ' with body: ' + str(body))
         raise falcon.HTTPBadRequest('Modify Resource Error', 'Failed to modify Resource')
 
 
@@ -85,6 +85,6 @@ def delete_resource(resources: hug.types.text, resource_id: hug.types.text):
             return str(resp)
         raise
     except:
-        log.error('Could not delete Resource: ' + resources + ' with body: ' + body)
+        log.error('Could not delete Resource: ' + resources)
         raise falcon.HTTPBadRequest('Delete Resource Error', 'Failed to delete Resource')
 
