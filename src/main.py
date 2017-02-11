@@ -7,6 +7,7 @@ import falcon
 from log import log
 import logging
 from db import KaranaDBWrapper
+import json
 module_log = logging.getLogger(__name__)
 log.info(docstring)
 module_log.info('test for logger name __name__')
@@ -36,11 +37,11 @@ def create_resource(resources: hug.types.text, data):
     if resources == 'v1':  # This is necessary when resource_id is empty
         return False
     try:
-        resp = db.add_new_res(resources, str(data))
-        if resp:
-            return str(resp)
+        results = {'results':{'uuid':db.add_new_res(resources, str(data))}}
+        if results['results']['uuid']:
+            return json.dumps(results)
         raise
-    except:
+    except Exception as e:
         log.error('Could not Create Resource: ' + resources + ' with data: ' + str(data))
         raise falcon.HTTPBadRequest('Create Resource Error', 'Failed to create new Resource')
 

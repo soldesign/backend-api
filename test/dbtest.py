@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 
 # import http.client
 # import base64
@@ -20,13 +21,17 @@ header = TestHTTP.__get_header__(content_type="application/json")
 
 # http://127.0.0.1:8000/v1/users/new body='{"name":"Micha","role":"admin","email":"mica@all.de"}'
 
+
 def test_create_user_and_karana():
-    user = '{"data":"{\\\"name\\\":\\\"Micha\\\",\\\"role\\\":\\\"admin\\\",\\\"email\\\":\\\"mic@all.de\\\"}"}'
+    userdict = {'data': '{"name":"Micha","role":"admin","email":"mic@all.de"}'}
+    user = json.dumps(userdict)
     client.request("POST", "/v1/users/new/", user, header)
     resp = client.getresponse()
     assert resp.status < 300
-    u_id = resp.read().decode('UTF-8')[1:-1]
-    karana = '{"data":"{\\\"name\\\":\\\"Karana\\\",\\\"owner\\\":\\\"' + u_id + '\\\"}"}'
+    tmp = resp.read().decode('utf-8')
+    results = json.loads(json.loads(tmp))
+    karanadict = {'data': '{"name":"Karana","owner":"' + results['results']['uuid'] + '"}'}
+    karana = json.dumps(karanadict)
     print(karana)
     client.request("POST", "/v1/karanas/new/", karana, header)
     resp = client.getresponse()
