@@ -99,7 +99,7 @@ class KaranaDBWrapper(object):
                     else:
                         log.warning("A malformed entry was found in the db table: '" +\
                                     res_table_name + \
-                                    "'."))
+                                    "'.")
             #log.debug('"overwrite metadata entry in db with the one from configuration"')
             #self.tables[res_table_name].insert(resourceConfig[res_table_id]['metadata'])
 
