@@ -44,13 +44,29 @@ class KaranaDBWrapper(object):
     def __init__(self):
         self.db = tinydb.TinyDB(__karanaDbPath__, indent=4, sort_keys=True)
         self.res_schema = None
+        log.debug("initialize empty main_state and special 'pointers'")
         self.main_state = {'metadata': {},\
-                           'tables': {}}
+                           'tables': {},\
+                           'uuid_index': {},\
+                           'uniqueness_index': {},\
+                           'sync_state': {},\
+                           'schema_index': {}
+                           }
         self.tables = self.main_state['tables']
-        self.uuid_index = {}
-        self.schema_index = {}
+        self.uuid_index = self.main_state['uuid_index']
+        self.uniqueness_index = self.main_state['uniqueness_index']
+        self.sync_state = self.main_state['sync_state']
+        self.schema_index = self.main_state['schema_index']
+        log.debug("This is how the main_state looks right now: " + str(self.main_state) )
+
+        ########
+        log.debug("Now the population methods will be started:")
+        ##
+        log.debug("self.__import_state_from_db__():")
         self.__import_state_from_db__()
-        self.__uniqueness_index__ = {}
+        log.debug("This is how the main_state looks right now: " + str(self.main_state) )
+        ##
+        log.debug("")
 
     def __import_state_from_db__(self):
         # sanitatized import, consistency checks and repair/migration of old databases needed
@@ -121,6 +137,8 @@ class KaranaDBWrapper(object):
                                     res_table_name + \
                                     "'.")
 
+
+
     def __push_deb__(self):
         pass
 
@@ -132,7 +150,7 @@ class KaranaDBWrapper(object):
     def update_uuid_index(self):
         try:
             for table in self.tables:
-                for entry in table.all():
+                for entry in self.tables[table].keys():
                     if 'uuid' in entry.keys():
                         self.uuid_index[entry["uuid"]] = table[entry["uuid"]]
         except:
