@@ -143,7 +143,7 @@ class KaranaDBWrapper(object):
             new_res, errors = Schema_class().loads(body)
             userdict = dict(Schema_class().dump(new_res).data)
             ### unique field check
-            self.tables[table].insert(userdict)
+            self.tables[table][userdict['uuid'] = userdict
             return userdict['uuid']
         except:
             log.error("resource json validation or db import error")
