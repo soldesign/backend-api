@@ -5,10 +5,45 @@ import logging
 import json
 from configparser import ConfigParser
 
-class InfluxDBWrapper(object):
-    """The __ functions are helpers, defines functions to create a client and register a karana"""
-    def __init__(self):
+
+class DBHTTPSetup(object):
+    def __init__(self, db):
+        self.db = db
         self.log = logging.getLogger(__name__)
+
+    def __get_parser__(self):
+        """This returns the parser of the config.ini file"""
+        parser = ConfigParser()
+        self.log.debug('Load config.ini')
+        parser.read('config.ini')
+        return parser
+
+    def __conn_setup__(self):
+        """This establishes a connection to influxDB which can be used to send requests to the influxdb instance"""
+        self.log.info('Setup Connection')
+        parser = self.__get_parser__()
+        try:
+            return http.client.HTTPSConnection(parser.get('influxdb', 'host') + ':' + parser.get('influxdb', 'port'))
+        except Exception:
+            self.log.error('The http connection to the influx instance could not be instanciated')
+            return None
+
+    def __get_header__(self):
+        """This returns the header with correct basic auth"""
+        self.log.info('Create Header')
+        parser = self.__get_parser__()
+        user_and_pass = base64.b64encode(
+            bytes(parser.get(self.db, 'user') + ':' + parser.get(self.db, 'pass'), "utf-8")).decode("ascii")
+        headers = {'Authorization': 'Basic %s' % user_and_pass, "Content-type": "application/x-www-form-urlencoded"}
+        self.log.info('header:' + str(headers))
+        return headers
+
+
+class InfluxDBWrapper(DBHTTPSetup):
+    """The __ functions are helpers, defines functions to create a client and register a karana"""
+
+    def __init__(self):
+        super().__init__(db='influxdb')
 
     def create_db(self, db):
         """This method creates a db in influx"""
@@ -54,16 +89,9 @@ class InfluxDBWrapper(object):
             return str(config)
         return False
 
-    def __get_parser__(self):
-        '''This returns the parser of the config.ini file'''
-        parser = ConfigParser()
-        self.log.debug('Load config.ini')
-        parser.read('config.ini')
-        return parser
-
-    def __send_get_request__(self,db,query):
+    def __send_get_request__(self, db, query):
         '''This method sends a get request with the appropriate query for SHOW and SELECT!'''
-        self.log.info('Start get request: db=' + db + ' q=' + query )
+        self.log.info('Start get request: db=' + db + ' q=' + query)
         client = self.__conn_setup__()
         try:
             client.request("GET", "/query?db=" + db + "&q=" + query, headers=self.__get_header__())
@@ -80,11 +108,12 @@ class InfluxDBWrapper(object):
             return None
 
     def __send_post_request__(self, db, query):
-        '''This method sends a post request with the appropriate query for ALTER CREATE DELETE DROP GRANT KILL REVOKE!'''
+        """This method sends a post request with the appropriate query for ALTER CREATE DELETE DROP GRANT KILL
+        REVOKE! """
         self.log.info('Start post request: db=' + db + ' q=' + query)
         client = self.__conn_setup__()
         try:
-            client.request("POST","/query?db="+ db + "&q=" + query,headers=self.__get_header__())
+            client.request("POST", "/query?db=" + db + "&q=" + query, headers=self.__get_header__())
             resp = client.getresponse()
             self.log.info('Post response is: ' + str(resp.status))
             if resp.status >= 400:
@@ -102,11 +131,11 @@ class InfluxDBWrapper(object):
             return 400
 
     def __send_insert_request__(self, db, data):
-        '''This method sends a write request with the appropriate data in influx command line syntax'''
-        self.log.info('Start insert request: db=' + db + ' insert=' + data )
+        """This method sends a write request with the appropriate data in influx command line syntax"""
+        self.log.info('Start insert request: db=' + db + ' insert=' + data)
         client = self.__conn_setup__()
         try:
-            client.request("POST","/write?db="+ db, data, headers=self.__get_header__())
+            client.request("POST", "/write?db=" + db, data, headers=self.__get_header__())
             resp = client.getresponse()
             self.log.info('Insert response is: ' + str(resp.status))
             if resp.status >= 400:
@@ -115,26 +144,3 @@ class InfluxDBWrapper(object):
         except Exception:
             self.log.error('The Insert Request did not succeed, Status: ' + str(resp.status) + ' ' + resp.reason)
             return resp.status
-
-
-    def __conn_setup__(self):
-        '''This establishes a connection to influxDB which can be used to send requests to the influxdb instance'''
-        self.log.info('Setup Connection')
-        parser = self.__get_parser__()
-        try:
-            return http.client.HTTPSConnection(parser.get('influxdb','host') + ':' + parser.get('influxdb','port'))
-        except Exception:
-            self.log.error('The http connection to the influx instance could not be instanciated')
-            return None
-
-    def __get_header__(self):
-        '''This returns the header with correct basic auth'''
-        self.log.info('Create Header')
-        parser = self.__get_parser__()
-        userAndPass = base64.b64encode(bytes(parser.get('influxdb','user') + ':' + parser.get('influxdb','pass'),"utf-8")).decode("ascii")
-        headers = { 'Authorization' : 'Basic %s' %  userAndPass , "Content-type": "application/x-www-form-urlencoded"}
-        self.log.info('header:' + str(headers))
-        return headers
-
-
-
