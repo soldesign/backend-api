@@ -3,6 +3,7 @@
 docstring = """This is the main api which will be started by running run.sh"""
 
 import hug
+import falcon
 from log import log
 import logging
 from db import KaranaDBWrapper
@@ -13,17 +14,19 @@ module_log.info('test for logger name __name__')
 db = KaranaDBWrapper()
 
 @hug.get('/{resources}/{resource_id}/', version=1)
-def get_resource(resources: hug.types.text, resource_id: hug.types.text):
+def get_resource(resources: hug.types.text, resource_id: hug.types.text, response):
     """This method returns either the resource with given ID or all resources"""
     if resources == 'v1': # This is necessary when resource_id is empty
         resources = resource_id
         resource_id = ''
     try:
-
-        return str(db.get_db_dump())
-    except Exception:
+        resp = db.get_db_dump()
+        if resp:
+            return str(resp)
+        raise
+    except:
         log.error('Couldnt get Resource for resource: ' + resources + ' with id: ' + resource_id)
-        return False
+        raise falcon.HTTPBadRequest('Get Resource Error', 'Failed to get requested resources Resource')
 
 
 @hug.post('/{resources}/new/', version=1)
@@ -32,10 +35,13 @@ def create_resource(resources: hug.types.text, body):
     if resources == 'v1':  # This is necessary when resource_id is empty
         return False
     try:
-        return db.add_new_res(resources, body)
-    except Exception:
-        log.error('Couldnot Create Resource: ' + resources + ' with body: ' + body)
-        return False
+        resp = db.add_new_res(resources, body)
+        if resp:
+            return str(resp)
+        raise
+    except:
+        log.error('Could not Create Resource: ' + resources + ' with body: ' + body)
+        raise falcon.HTTPBadRequest('Create Resource Error', 'Failed to create new Resource')
 
 
 @hug.put('/{resources}/{resource_id}/', version=1)
@@ -44,10 +50,13 @@ def updated_resource(resources: hug.types.text, resource_id: hug.types.text, bod
     if resources == 'v1':  # This is necessary when resource_id is empty
         return False
     try:
-        return True
-    except Exception:
-        log.error('Couldnot Update Resource: ' + resources + ' resource_id: ' + resource_id + ' body: ' + body)
-        return False
+        resp = 0
+        if resp:
+            return str(resp)
+        raise
+    except:
+        log.error('Could not update Resource: ' + resources + ' with body: ' + body)
+        raise falcon.HTTPBadRequest('Update Resource Error', 'Failed to update Resource')
 
 
 @hug.patch('/{resources}/{resource_id}/', version=1)
@@ -56,10 +65,13 @@ def modify_resource(resources: hug.types.text, resource_id: hug.types.text, body
     if resources == 'v1':  # This is necessary when resource_id is empty
         return False
     try:
-        return True
-    except Exception:
-        log.error('Couldnot Modify Resource: ' + resources + ' resource_id: ' + resource_id + ' body: ' + body)
-        return False
+        resp = 0
+        if resp:
+            return str(resp)
+        raise
+    except:
+        log.error('Could not modify Resource: ' + resources + ' with body: ' + body)
+        raise falcon.HTTPBadRequest('Modify Resource Error', 'Failed to modify Resource')
 
 
 @hug.delete('/{resources}/{resource_id}/', version=1)
@@ -68,9 +80,11 @@ def delete_resource(resources: hug.types.text, resource_id: hug.types.text):
     if resources == 'v1':  # This is necessary when resource_id is empty
         return False
     try:
-        #KaranaDBWrapper.rm_res()
-        return True
-    except Exception:
-        log.error('Couldnot Update Resource: ' + resources + ' resource_id: ' + resource_id + ' body: ' + body)
-        return False
+        resp = 0
+        if resp:
+            return str(resp)
+        raise
+    except:
+        log.error('Could not delete Resource: ' + resources + ' with body: ' + body)
+        raise falcon.HTTPBadRequest('Delete Resource Error', 'Failed to delete Resource')
 
