@@ -12,19 +12,26 @@ from influx import InfluxDBWrapper
 Wrapper = InfluxDBWrapper()
 
 
-def test_influx1():
+def test_influx_create_db():
     assert Wrapper.create_db('testdb')
 
-def test_influx2():
+def test_insert_as_admin():
     assert Wrapper.insert_config('testdb', 'config', '123')
     assert Wrapper.get_config('testdb', '123') == 'config'
 
-def test_influx3():
+
+def test_create_user():
     assert Wrapper.create_user('testuser', 'testpw')
     assert not Wrapper.grant_privilege_user('testdb', 'testuse', 'all')
     assert Wrapper.grant_privilege_user('testdb', 'testuser', 'all')
 
-def test_influx4():
+
+def test_inser_as_user():
+    assert Wrapper.insert_config('testdb', 'config', '123', 'testuser', 'testpw')
+    assert Wrapper.get_config('testdb', '123', 'testuser', 'testpw') == 'config'
+
+
+def test_remove_all():
     assert Wrapper.remove_db('testdb')
     assert Wrapper.remove_user('testuser')
     assert not Wrapper.remove_user('testuser')
