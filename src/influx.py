@@ -1,6 +1,6 @@
 import http.client
 import base64
-from log import log
+#from log import log
 import logging
 import json
 from configparser import ConfigParser
@@ -28,13 +28,18 @@ class DBHTTPSetup(object):
             self.log.error('The http connection to the influx instance could not be instanciated')
             return None
 
-    def __get_header__(self):
+    def __get_header__(self, user=None, password=None, content_type="application/x-www-form-urlencoded"):
         """This returns the header with correct basic auth"""
         self.log.info('Create Header')
         parser = self.__get_parser__()
+        if user is None:
+            user = parser.get(self.db, 'user')
+        if password is None:
+            password = parser.get(self.db, 'pass')
+        self.log.info('Create Header')
         user_and_pass = base64.b64encode(
-            bytes(parser.get(self.db, 'user') + ':' + parser.get(self.db, 'pass'), "utf-8")).decode("ascii")
-        headers = {'Authorization': 'Basic %s' % user_and_pass, "Content-type": "application/x-www-form-urlencoded"}
+            bytes(user + ':' + password, "utf-8")).decode("ascii")
+        headers = {'Authorization': 'Basic %s' % user_and_pass, "Content-type": content_type}
         self.log.info('header:' + str(headers))
         return headers
 
@@ -73,15 +78,15 @@ class InfluxDBWrapper(DBHTTPSetup):
         resp = self.__send_post_request__('_internal', 'drop+user+' + name)
         return resp < 300
 
-    def insert_config(self, db, config, karana_id):
+    def insert_config(self, db, config, karana_id, user=None, password=None):
         """This method inserts a config into the influx db with the karana id, note there is no style checing
         for the config!"""
-        resp = self.__send_insert_request__(db, 'config,data=' + config + ',id=' + karana_id + ' v=0')
+        resp = self.__send_insert_request__(db, 'config,data=' + config + ',id=' + karana_id + ' v=0', user, password)
         return resp == 204
 
-    def get_config(self, db, karana_id):
+    def get_config(self, db, karana_id, user=None, password=None):
         """This method returns the last config for a certain karana id"""
-        resp = self.__send_get_request__(db, "select+last(*),data+from+config+where+id='" + karana_id + "'")
+        resp = self.__send_get_request__(db, "select+last(*),data+from+config+where+id='" + karana_id + "'", user, password)
         if resp:
             self.log.debug('config is: ' + str(resp))
             index = resp['results'][0]['series'][0]['columns'].index('data')
@@ -89,12 +94,12 @@ class InfluxDBWrapper(DBHTTPSetup):
             return str(config)
         return False
 
-    def __send_get_request__(self, db, query):
+    def __send_get_request__(self, db, query, user=None, password=None):
         '''This method sends a get request with the appropriate query for SHOW and SELECT!'''
         self.log.info('Start get request: db=' + db + ' q=' + query)
         client = self.__conn_setup__()
         try:
-            client.request("GET", "/query?db=" + db + "&q=" + query, headers=self.__get_header__())
+            client.request("GET", "/query?db=" + db + "&q=" + query, headers=self.__get_header__(user, password))
             resp = client.getresponse()
             self.log.info('Get response is: ' + str(resp.status))
             if resp.status >= 400:
@@ -104,7 +109,7 @@ class InfluxDBWrapper(DBHTTPSetup):
             self.log.error('No JSON came back from the get request to influx DB')
             return None
         except Exception:
-            self.log.error('The GET Request did not succeed, Status: ' + str(resp.status) + ' ' + resp.reason)
+            self.log.error('The GET Request did not succeed, Status: ')
             return None
 
     def __send_post_request__(self, db, query):
@@ -127,20 +132,20 @@ class InfluxDBWrapper(DBHTTPSetup):
             self.log.error('No JSON came back from the get request to influx DB')
             return 400
         except Exception:
-            self.log.error('The POST Request did not succeed, Status: ' + str(resp.status) + ' ' + resp.reason)
+            self.log.error('The POST Request did not succeed, Status: ' )
             return 400
 
-    def __send_insert_request__(self, db, data):
+    def __send_insert_request__(self, db, data, user=None, password=None):
         """This method sends a write request with the appropriate data in influx command line syntax"""
         self.log.info('Start insert request: db=' + db + ' insert=' + data)
         client = self.__conn_setup__()
         try:
-            client.request("POST", "/write?db=" + db, data, headers=self.__get_header__())
+            client.request("POST", "/write?db=" + db, data, headers=self.__get_header__(user, password))
             resp = client.getresponse()
             self.log.info('Insert response is: ' + str(resp.status))
             if resp.status >= 400:
                 raise Exception
             return resp.status
         except Exception:
-            self.log.error('The Insert Request did not succeed, Status: ' + str(resp.status) + ' ' + resp.reason)
-            return resp.status
+            self.log.error('The Insert Request did not succeed, Status: ' )
+            return 400
