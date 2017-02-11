@@ -78,6 +78,9 @@ class KaranaDBWrapper(object):
             if res_table_name in self.db.tables():
                 db_table = self.db.table(res_table_name)
                 db_table_state = db_table.all()
+                log.debug("go through all entries in table: '"+\
+                          str(res_table_name) +\
+                          "' and try to import it to the internal table representation")
                 for entry in db_table_state:
                     if len(entry) == 1:
                         try:
@@ -97,7 +100,7 @@ class KaranaDBWrapper(object):
                                       str(entry) + \
                                       "'.\nIt will not be imported!")
                             break
-                        #import it
+                        #try to import it
                         try:
                             validated_entry = table_schema(strict=True).loads(entry).data
                             self.tables[res_table_name] = dict(validated_entry)
