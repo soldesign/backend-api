@@ -5,8 +5,8 @@ import logging
 
 class SynchInflux(object):
     """This class provides the methods to synch a given seed with an influxdb instance"""
-    def __init__(self, seed):
-        self.seed = seed
+    def __init__(self):
+        #self.seed = seed
         self.wrapper = InfluxDBWrapper()
         self.log = logging.getLogger(__name__)
 

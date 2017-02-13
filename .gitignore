@@ -3,3 +3,4 @@
 **/venv
 **/db.json
 **/.cache
+src/logging.yaml
