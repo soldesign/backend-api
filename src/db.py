@@ -6,6 +6,7 @@ import tinydb
 import os
 import sys
 from configuration import resources as resourceConfig
+from synch import SynchInflux
 import inspect
 import schema
 import json
@@ -58,6 +59,7 @@ class KaranaDBWrapper(object):
         self.uniqueness_index = self.main_state['uniqueness_index']
         self.sync_state = self.main_state['sync_state']
         self.schema_index = {}
+
         log.debug("This is how the main_state looks right now: " + str(self.main_state))
 
         ########
@@ -65,6 +67,8 @@ class KaranaDBWrapper(object):
         ##
         log.debug("self.__import_state_from_db__():")
         self.__build_schema_index__()
+        self.__sync_state_action__()
+
         log.debug("This is how the main_state looks right now: " + str(self.main_state))
         ##
         log.debug("")
@@ -97,7 +101,7 @@ class KaranaDBWrapper(object):
             log.debug(
                 "Now the data structure in the schema_index and the empty table is set up.\n\nLet's populate the table '" + res_table_name + "'")
             if not res_table_name in self.tables:
-                self.tables[res_table_name] = {} #TODO: is this correct??
+                self.tables[res_table_name] = {}  # TODO: is this correct??
 
             self.__import_table_from_db__(res_table_name)
         self.sync_state['synch'] = True
@@ -109,8 +113,8 @@ class KaranaDBWrapper(object):
         table_import_schema = self.schema_index[table_name]['entry_import_schema']
         if table_name in self.main_state['tables']:
             db_table_state = self.main_state['tables'][table_name]
-            log.debug("go through all entries in table: '"  + \
-                      str(table_name) +\
+            log.debug("go through all entries in table: '" + \
+                      str(table_name) + \
                       "' and try to import it to the internal table representation")
             for entry in db_table_state:
                 log.debug(
@@ -138,7 +142,7 @@ class KaranaDBWrapper(object):
                                   "'.\nIt will not be imported!", e)
                         # this should be discussed: break or exit?
                         exit()
-                             # try to import it, through the validation from the import schema of the table
+                        # try to import it, through the validation from the import schema of the table
                     try:
                         validated_entry = table_import_schema(strict=True).loads(entry)
                         log.debug('validated? ' + str(validated_entry))
@@ -150,8 +154,8 @@ class KaranaDBWrapper(object):
                         continue
                     except Exception as e:
                         log.error("could not import the following entry: '" + \
-                                    str(entry) + \
-                                    "'.", e)
+                                  str(entry) + \
+                                  "'.", e)
                         exit()
                 elif len(entry) == 0:
                     log.warning("An empty entry was found and ignored in the db (table: '" + \
@@ -164,13 +168,47 @@ class KaranaDBWrapper(object):
                                 "'.")
                     exit()
 
-    def __sync_state__(self):
+    def __sync_state_action__(self):
         log.info('synching the created user and karanas with the influxdb and dumping the main_stateS')
+        Synch = SynchInflux()
         if self.sync_state['synch']:
             self.__dump_main_state__()
         for uuid in self.sync_state:
             if uuid != 'synch':
-                log.info('Synching uuid' + uuid)
+                log.info('Synching uuid ' + uuid)
+                if not self.sync_state[uuid]:
+                    log.debug("Theses key are usable: " + str(self.tables['users'].keys()))
+                    if uuid in self.tables['users'].keys():
+                        try:
+                            log.debug('Synching User ' + uuid + 'with the influx')
+                            password = self.tables['users'][uuid]['credentials']['password']
+                            if not Synch.check_user_read(uuid, password):
+                                if not Synch.register_user(uuid, password):
+                                    raise
+                                self.sync_state[uuid] = True
+                            return True
+                        except:
+                            log.debug('Synching User ' + uuid + 'with the influx failed')
+                            return False
+                    elif uuid in self.tables['karanas'].keys():
+                        try:
+                            log.debug('Synching Karana ' + uuid + 'with the influx')
+                            password = self.tables['karanas'][uuid]['credentials']['password']
+                            user_id = self.tables['karanas'][uuid]['owner']
+                            if not Synch.check_karana_read(user_id, uuid, password) or Synch.check_karana_write(user_id,
+                                                                                                                uuid,
+                                                                                                                password):
+                                if not Synch.register_karana(user_id, uuid, password):
+                                    raise
+                                self.sync_state[uuid] = True
+                            return True
+                        except:
+                            log.debug('Synching Karana ' + uuid + 'with the influx failed')
+                            return False
+                    else:
+                        self.sync_state[uuid] = True
+
+        return True
 
     def __dump_main_state__(self):
         log.info("Dumping the main state to the location: " + defaultKaranaDbPath)
@@ -202,7 +240,7 @@ class KaranaDBWrapper(object):
             for entry in table.all():
                 pass
 
-    def update_uuid_index(self):
+    def __update_uuid_index__(self):
         try:
             for table in self.tables:
                 for entry in self.tables[table].keys():
@@ -236,15 +274,21 @@ class KaranaDBWrapper(object):
             schema_class = self.schema_index[table]['entry_create_schema']
             new_res, errors = schema_class(strict=True).loads(body)
             userdict = dict(schema_class().dump(new_res).data)
-            ### unique field check
+            # unique field check
             self.tables[table][userdict['uuid']] = userdict
             log.debug('Main State: ' + str(self.main_state))
-            self.sync_state['synch'] = False
-            self.sync_state[userdict['uuid']] = False
-            self.__dump_main_state__()
+            # is one of the following fails the entriy needs to be deleted again TODO: check this!
+            try:
+                self.sync_state['synch'] = False
+                self.__update_uuid_index__()
+                self.sync_state[userdict['uuid']] = False
+                self.__dump_main_state__()
+            except:
+                del self.tables[table][userdict['uuid']]
+                raise
             return userdict['uuid']
         except Exception as e:
-            log.error("resource json validation or db import error",e)
+            log.error("resource json validation or db import error", e)
             return False
 
     def update_res(self, table: str, uuid: str, body: str):

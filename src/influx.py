@@ -55,12 +55,12 @@ class InfluxDBWrapper(DBHTTPSetup):
 
     def create_db(self, db):
         """This method creates a db in influx"""
-        resp = self.__send_post_request__('_internal', 'create+database+' + db)
+        resp = self.__send_post_request__('_internal', 'create+database+"' + db + '"')
         return resp < 300
 
     def create_user(self, name, password):
         """This method creates a user on the database db"""
-        resp = self.__send_post_request__('_internal', "create+user+" + name + "+with+password+'" + password + "'")
+        resp = self.__send_post_request__('_internal', 'create+user+"' + name + '"' + "+with+password+'" + password + "'")
         return resp < 300
 
     def grant_privilege_user(self, db, name, privilege):
@@ -68,17 +68,17 @@ class InfluxDBWrapper(DBHTTPSetup):
         if privilege not in ['all', 'write', 'read']:
             self.log.error('Privilege was not in all, write, read!')
             return False
-        resp = self.__send_post_request__(db, "grant+" + privilege + "+on+" + db + "+to+" + name)
+        resp = self.__send_post_request__(db, "grant+" + privilege + '+on+"' + db + '"+to+"' + name + '"')
         return resp < 300
 
     def remove_db(self, db):
         """This method removes a db in influx"""
-        resp = self.__send_post_request__('_internal', 'drop+database+' + db)
+        resp = self.__send_post_request__('_internal', 'drop+database+"' + db + '"')
         return resp < 300
 
     def remove_user(self, name):
         """This method removes a user in influx"""
-        resp = self.__send_post_request__('_internal', 'drop+user+' + name)
+        resp = self.__send_post_request__('_internal', 'drop+user+"' + name + '"')
         return resp < 300
 
     def insert_timepoint(self, db, timeseries, config, karana_id, user=None, password=None):
