@@ -91,7 +91,7 @@ class InfluxDBWrapper(DBHTTPSetup):
         """This method returns the last config for a certain karana id"""
         resp = self.__send_get_request__(db, "select+last(*),data+from+" + timeseries + "+where+id='" + karana_id + "'", user, password)
         if resp:
-            self.log.debug('config is: ' + str(resp))
+            self.log.error('config is: ' + str(resp))
             index = resp['results'][0]['series'][0]['columns'].index('data')
             config = resp['results'][0]['series'][0]['values'][0][index]
             return str(config)
@@ -105,9 +105,13 @@ class InfluxDBWrapper(DBHTTPSetup):
             client.request("GET", "/query?db=" + db + "&q=" + query, headers=self.__get_header__(user, password))
             resp = client.getresponse()
             self.log.info('Get response is: ' + str(resp.status))
+            iserror = str(resp.read().decode('utf-8'))
+            self.log.debug(iserror)
+            if iserror.find('error') >= 0:
+                raise Exception
             if resp.status >= 400:
                 raise Exception
-            return json.loads(str(resp.read().decode('utf-8'))[:-1])
+            return json.loads(iserror[:-1])
         except json.JSONDecodeError:
             self.log.error('No JSON came back from the get request to influx DB')
             return None
@@ -147,6 +151,9 @@ class InfluxDBWrapper(DBHTTPSetup):
             resp = client.getresponse()
             self.log.info('Insert response is: ' + str(resp.status))
             if resp.status >= 400:
+                raise Exception
+            iserror = str(resp.read().decode('utf-8'))
+            if iserror.find('error') >= 0:
                 raise Exception
             return resp.status
         except Exception:

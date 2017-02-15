@@ -40,7 +40,7 @@ class Karana(object):
 
 
 class UserSchema(Schema):
-    uuid = fields.Str(dump_only=True)
+    uuid = fields.UUID(dump_only=True)
     name = fields.Str(required=True)
     email = fields.Email(required=True)
     credentials = fields.Dict()
@@ -64,7 +64,7 @@ class UserDbSchema(Schema):
 
 
 class KaranaSchema(Schema):
-    uuid = fields.Str(dump_only=True)
+    uuid = fields.UUID(dump_only=True)
     name = fields.Str(required=True)
     note = fields.Str()
     credentials = fields.Dict()

@@ -21,11 +21,19 @@ def get_resource(resources: hug.types.text, resource_id: hug.types.text, respons
         resources = resource_id
         resource_id = ''
     try:
-        resp = db.get_db_dump()
-        if resp:
-            return str(resp)
+        log.debug('Trying get Resource for resource: ' + resources + ' with id: ' + resource_id)
+        if resource_id == '':
+            all_res = db.get_res(resources)
+            results = {'results': [all_res]}
+            if results['results'][0] or results['results'][0] == {}:
+                return json.dumps(results)
+        else:
+            results = {'results': [{resource_id: db.get_res_by_id(resources, resource_id)}]}
+            if results['results'][0][resource_id]:
+                return json.dumps(results)
+        log.error('Results: ' + str(results))
         raise
-    except:
+    except Exception as e:
         log.error('Couldnt get Resource for resource: ' + resources + ' with id: ' + resource_id)
         raise falcon.HTTPBadRequest('Get Resource Error', 'Failed to get requested resources Resource')
 
@@ -37,8 +45,8 @@ def create_resource(resources: hug.types.text, data):
     if resources == 'v1':  # This is necessary when resource_id is empty
         return False
     try:
-        results = {'results':{'uuid':db.add_new_res(resources, str(data))}}
-        if results['results']['uuid']:
+        results = {'results': [{'uuid': db.add_new_res(resources, str(data))}]}
+        if results['results'][0]['uuid']:
             return json.dumps(results)
         raise
     except Exception as e:
@@ -52,12 +60,14 @@ def updated_resource(resources: hug.types.text, resource_id: hug.types.text, dat
     if resources == 'v1':  # This is necessary when resource_id is empty
         return False
     try:
-        resp = 0
-        if resp:
-            return str(resp)
+        results = {'results': [{resource_id: db.update_res(resources, resource_id, str(data))}]}
+        log.debug('Results ' + str(results))
+
+        if results['results'][0][resource_id]:
+            return json.dumps(results)
         raise
-    except:
-        log.error('Could not update Resource: ' + resources + ' with data: ' + str(data))
+    except Exception as e:
+        log.error('Could not update Resource: ' + resources + ' with data: ' + str(data),e)
         raise falcon.HTTPBadRequest('Update Resource Error', 'Failed to update Resource')
 
 
@@ -67,11 +77,12 @@ def modify_resource(resources: hug.types.text, resource_id: hug.types.text, data
     if resources == 'v1':  # This is necessary when resource_id is empty
         return False
     try:
-        resp = 0
-        if resp:
-            return str(resp)
+        results = {'results': [{resource_id: db.modify_res(resources, resource_id, str(data))}]}
+        log.debug('Results ' + str(results))
+        if results['results'][0][resource_id]:
+            return json.dumps(results)
         raise
-    except:
+    except Exception as e:
         log.error('Could not modify Resource: ' + resources + ' with data: ' + str(data))
         raise falcon.HTTPBadRequest('Modify Resource Error', 'Failed to modify Resource')
 
@@ -82,11 +93,15 @@ def delete_resource(resources: hug.types.text, resource_id: hug.types.text):
     if resources == 'v1':  # This is necessary when resource_id is empty
         return False
     try:
-        resp = 0
+        resp = db.get_res_by_id(resources, resource_id)
         if resp:
-            return str(resp)
+            all_res = db.rm_res(resources, resource_id)
+            results = {'results': [all_res]}
+            if results['results'][0] or results['results'][0] == {}:
+                return json.dumps(results)
+        log.error('Results: ' + str(results))
         raise
-    except:
-        log.error('Could not delete Resource: ' + resources)
+    except Exception as e:
+        log.error('Could not delete Resource: ' + resources + ' with uuid ' + resource_id)
         raise falcon.HTTPBadRequest('Delete Resource Error', 'Failed to delete Resource')
 
