@@ -63,8 +63,8 @@ class KaranaDBWrapper(object):
         log.debug("Now the population methods will be started:")
         ##
         log.debug("self.__import_state_from_db__():")
-        self.__import_state_from_db__()
-        log.debug("This is how the main_state looks right now: " + str(self.main_state) )
+        self.__build_schema_index__()
+        log.debug("This is how the main_state looks right now: " + str(self.main_state))
         ##
         log.debug("")
 
@@ -75,28 +75,31 @@ class KaranaDBWrapper(object):
             res_table_name = resourceConfig[res_table_id]['metadata']['name']
             log.debug("create dict with in self.schema_index '" + str(res_table_name) + "' with the resource table name from the config.")
             self.schema_index[res_table_name] = {}
-            for schema_type, schema_name in resourceConfig[res_table_id]['metadata']['schema'].keys(), resourceConfig[res_table_id]['metadata']['schema'].keys():
+            log.debug("Schema: " + str(resourceConfig[res_table_id]['metadata']['schema'].keys()))
+            for schema_type in resourceConfig[res_table_id]['metadata']['schema']:
+                schema_name = resourceConfig[res_table_id]['metadata']['schema'][schema_type]
                 log.debug("try to find the schema for this table as mentioned in the config.")
                 if schema_name in globalschemas.keys():
                     self.schema_index[res_table_name][schema_type] = globalschemas[schema_name]
-                    log.debug("the following schema is added to the schema_index: " + str(schema_import_name))
+                    log.debug("the following schema is added to the schema_index: " + str(schema_name))
                 else:
                     log.error("Major error, the configuration is corrupted!\nThe following schema with the schema_import_name: '" + \
-                              str(schema_import_name) + \
+                              str(schema_name) + \
                               "' from the configuration is not implemented! \n" +  \
                               "Only on of the following schemas are defined: " +
                               str(globalschemas) + \
                               "\nThe service ist stopped, repair the configuration and restart it.")
                     sys.exit(1)
             log.debug("Now the data structure in the schema_index and the empty table is set up.\n\nLet's populate the table '" + res_table_name + "'")
-            self.tables[table_name] = {}
+            self.tables[res_table_name] = {} #TODO: is this correct??
             self.__import_table_from_db__(res_table_name)
 
 
     def __import_table_from_db__(self, table_name):
         # sanitatized import, consistency checks and repair/migration of old databases needed
         # resourceConfig[res_id]['name'] need to fit in a schema (a-z,A-Z,0-9)
-        table_import_schema = self.schema_index[table_name + '_import']
+        log.debug("Schema Index " + str(self.schema_index))
+        table_import_schema = self.schema_index[table_name]['entry_import_schema']
         if table_name in self.db.tables():
             db_table = self.db.table(table_name)
             db_table_state = db_table.all()
@@ -169,9 +172,8 @@ class KaranaDBWrapper(object):
             log.error("could not update uuid index, maybe some tables or entries are broken")
 
     def add_new_res(self, table: str, body: str):
-
         try:
-            Schema_class = self.schema_index[table + '_create']
+            Schema_class = self.schema_index[table]['entry_create_schema']
             new_res, errors = Schema_class(strict=True).loads(body)
             userdict = dict(Schema_class().dump(new_res).data)
             ### unique field check
@@ -179,7 +181,7 @@ class KaranaDBWrapper(object):
             log.debug('Main State: ' + str(self.main_state))
             return userdict['uuid']
         except Exception as e:
-            log.error("resource json validation or db import error")
+            log.error("resource json validation or db import error",e)
             return False
 
     def get_db_dump(self):
