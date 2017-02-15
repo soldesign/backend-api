@@ -96,10 +96,11 @@ class KaranaDBWrapper(object):
                     sys.exit(1)
             log.debug(
                 "Now the data structure in the schema_index and the empty table is set up.\n\nLet's populate the table '" + res_table_name + "'")
-            # self.tables[res_table_name] = {} #TODO: is this correct??
+            if not res_table_name in self.tables:
+                self.tables[res_table_name] = {} #TODO: is this correct??
+
             self.__import_table_from_db__(res_table_name)
         self.sync_state['synch'] = True
-
 
     def __import_table_from_db__(self, table_name):
         # sanitatized import, consistency checks and repair/migration of old databases needed
@@ -162,6 +163,14 @@ class KaranaDBWrapper(object):
                                 table_name + \
                                 "'.")
                     exit()
+
+    def __sync_state__(self):
+        log.info('synching the created user and karanas with the influxdb and dumping the main_stateS')
+        if self.sync_state['synch']:
+            self.__dump_main_state__()
+        for uuid in self.sync_state:
+            if uuid != 'synch':
+                log.info('Synching uuid' + uuid)
 
     def __dump_main_state__(self):
         log.info("Dumping the main state to the location: " + defaultKaranaDbPath)
@@ -231,10 +240,11 @@ class KaranaDBWrapper(object):
             self.tables[table][userdict['uuid']] = userdict
             log.debug('Main State: ' + str(self.main_state))
             self.sync_state['synch'] = False
+            self.sync_state[userdict['uuid']] = False
             self.__dump_main_state__()
             return userdict['uuid']
         except Exception as e:
-            log.error("resource json validation or db import error")
+            log.error("resource json validation or db import error",e)
             return False
 
     def update_res(self, table: str, uuid: str, body: str):
@@ -284,6 +294,7 @@ class KaranaDBWrapper(object):
             log.debug("Request id: " + uuid + " of table " + table)
             UUID(uuid, version=4)
             del self.tables[table][uuid]
+            del self.sync_state[uuid]
             log.debug('Main State: ' + str(self.main_state))
             self.sync_state['synch'] = False
             self.__dump_main_state__()
