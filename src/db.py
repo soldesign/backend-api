@@ -171,8 +171,6 @@ class KaranaDBWrapper(object):
     def __sync_state_action__(self):
         log.info('synching the created user and karanas with the influxdb and dumping the main_stateS')
         Synch = SynchInflux()
-        if self.sync_state['synch']:
-            self.__dump_main_state__()
         for uuid in self.sync_state:
             if uuid != 'synch':
                 log.info('Synching uuid ' + uuid)
@@ -186,7 +184,7 @@ class KaranaDBWrapper(object):
                                 if not Synch.register_user(uuid, password):
                                     raise
                                 self.sync_state[uuid] = True
-                            return True
+                            continue
                         except:
                             log.debug('Synching User ' + uuid + 'with the influx failed')
                             return False
@@ -200,14 +198,17 @@ class KaranaDBWrapper(object):
                                                                                                                 password):
                                 if not Synch.register_karana(user_id, uuid, password):
                                     raise
+                                self.tables['users'][user_id]['karanas'].append(uuid)
                                 self.sync_state[uuid] = True
-                            return True
+                            continue
                         except:
                             log.debug('Synching Karana ' + uuid + 'with the influx failed')
                             return False
                     else:
+                        log.debug('set synch state true for a non user or karana uuid')
                         self.sync_state[uuid] = True
-
+        if self.sync_state['synch']:
+            self.__dump_main_state__()
         return True
 
     def __dump_main_state__(self):
