@@ -240,9 +240,31 @@ class KaranaDBWrapper(object):
         pass
 
     def update_uniqueness_index(self):
-        for table in self.tables:
-            for entry in table.all():
-                pass
+        log.debug("rebuild the uniquess index in the main_state")
+        log.debug("try to go throught all tables and extract all must-be unique entries")
+        for tablename, table in self.tables.keys(), self.tables.items():
+            try:
+                log.debug("check if the table has unique entries defined in its metadata")
+                if len(table['metadata']['unique_schema_fields']) > 0 and type(table['metadata']['unique_schema_fields']) == list:
+                    log.debug("create an empty dict for the table '{0}' in the uniqueness_index".format(str(tablename)))
+                    self.uniqueness_index[tablename] = {}
+                    for field in table['metadata']['unique_schema_fields']:
+                        log.debug("create an empty dict for the field '{0}' in the table-dict of the uniqueness_index".format(str(field)))
+                        self.uniqueness_index[tablename][field] = {}
+                    log.debug("go through entries in the table {0} and import the unique entries with the a reference to their table entries".format(str(tablename)))
+                    for entry in table.keys():
+                        if entry != 'metadata':
+                            for field in table['metadata']['unique_schema_fields']:
+                                unique_value = table[entry][field]
+                                if unique_value not in self.uniqueness_index[tablename][field].keys():
+                                    self.uniqueness_index[tablename][field][unique_value] = table[entry]
+                                else:
+                                    log.warning("try to add the new entry '{0}' to the uniqueness_index, but there is already an entry. So the main_state is not consistant! \n ignoring the entry ".format(str(entry)))
+                                    # here we need a sanitizer
+            except:
+                log.warning("uniqueness_index building crashed (malformed data in the main_state?)")
+                log.warning("The table '{0}' has a malformed 'metadata' entry (['unique_schema_fields'] is missing?), so the uniqueness index can't be built".format(str(tablename)))
+                # maybe start here a system sanitizer
 
     def __update_uuid_index__(self):
         try:

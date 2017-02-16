@@ -26,6 +26,7 @@ resources = { users['metadata']['res_table_id']: users,\
               karanas['metadata']['res_table_id']: karanas\
               }
 
+loginresource = 'users'
 
 # maybe used later
 index = {}
