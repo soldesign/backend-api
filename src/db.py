@@ -47,13 +47,14 @@ class KaranaDBWrapper(object):
         self.db = {}
         self.res_schema = None
         log.debug("initialize empty main_state and special 'pointers'")
+        self.pre_tables = {}
         self.main_state = {'metadata': {}, \
                            'tables': {}, \
                            'uuid_index': {}, \
                            'uniqueness_index': {}, \
                            'sync_state': {} \
                            }
-        self.__load_main_state__()
+        self.__load_pre_main_state__()
         self.tables = self.main_state['tables']
         self.uuid_index = self.main_state['uuid_index']
         self.uniqueness_index = self.main_state['uniqueness_index']
@@ -65,7 +66,7 @@ class KaranaDBWrapper(object):
         ########
         log.debug("Now the population methods will be started:")
         ##
-        log.debug("self.__import_state_from_db__():")
+        log.debug("self.__build_schema_index__():")
         self.__build_schema_index__()
         self.__sync_state_action__()
 
@@ -74,7 +75,7 @@ class KaranaDBWrapper(object):
         log.debug("")
 
     def __build_schema_index__(self):
-        self.sync_state['synch'] = False
+        self.sync_state['sync'] = False
         for res_table_id in resourceConfig.keys():
             log.debug("create table instances ")
             log.debug("pull res_table_name and schema_name from the config")
@@ -104,15 +105,15 @@ class KaranaDBWrapper(object):
                 self.tables[res_table_name] = {}  # TODO: is this correct??
 
             self.__import_table_from_db__(res_table_name)
-        self.sync_state['synch'] = True
+        self.sync_state['sync'] = True
 
     def __import_table_from_db__(self, table_name):
         # sanitatized import, consistency checks and repair/migration of old databases needed
         # resourceConfig[res_id]['name'] need to fit in a schema (a-z,A-Z,0-9)
         log.debug("Schema Index " + str(self.schema_index))
         table_import_schema = self.schema_index[table_name]['entry_import_schema']
-        if table_name in self.main_state['tables']:
-            db_table_state = self.main_state['tables'][table_name]
+        if table_name in self.pre_tables:
+            db_table_state = self.pre_tables[table_name]
             log.debug("go through all entries in table: '" + \
                       str(table_name) + \
                       "' and try to import it to the internal table representation")
@@ -133,7 +134,7 @@ class KaranaDBWrapper(object):
                         #     continue
                         # else:
                         # all others will be reimported through a dict to a json again
-                        entry = json.dumps(self.main_state['tables'][table_name][entry])
+                        entry_json = json.dumps(self.pre_tables[table_name][entry])
                     except Exception as e:
                         log.error("The following entry in the table '" + \
                                   str(table_name) + \
@@ -144,17 +145,19 @@ class KaranaDBWrapper(object):
                         exit()
                         # try to import it, through the validation from the import schema of the table
                     try:
-                        validated_entry = table_import_schema(strict=True).loads(entry)
+                        validated_entry = table_import_schema(strict=True).loads(entry_json)
                         log.debug('validated? ' + str(validated_entry))
                         # now everything is checked and filtered, the entry may be written as element to the table
                         # maybe here or somewhere else a the uniqueness could be checked:
                         # I think here the uniqueness index should be filled and there it could be checked
                         if validated_entry.errors != {}:
                             raise
+                        self.main_state['tables'][table_name][entry] = json.loads(entry_json)
+                        log.debug("This is how the main_state looks right now: " + str(self.main_state))
                         continue
                     except Exception as e:
                         log.error("could not import the following entry: '" + \
-                                  str(entry) + \
+                                  str(entry) + ': ' + str(entry_json) +\
                                   "'.", e)
                         exit()
                 elif len(entry) == 0:
@@ -172,7 +175,7 @@ class KaranaDBWrapper(object):
         log.info('synching the created user and karanas with the influxdb and dumping the main_stateS')
         Synch = SynchInflux()
         for uuid in self.sync_state:
-            if uuid != 'synch':
+            if uuid != 'sync':
                 log.info('Synching uuid ' + uuid)
                 if not self.sync_state[uuid]:
                     log.debug("Theses key are usable: " + str(self.tables['users'].keys()))
@@ -207,7 +210,7 @@ class KaranaDBWrapper(object):
                     else:
                         log.debug('set synch state true for a non user or karana uuid')
                         self.sync_state[uuid] = True
-        if self.sync_state['synch']:
+        if self.sync_state['sync']:
             self.__dump_main_state__()
         return True
 
@@ -215,19 +218,19 @@ class KaranaDBWrapper(object):
         log.info("Dumping the main state to the location: " + defaultKaranaDbPath)
         try:
             with open(defaultKaranaDbPath, 'w')as db_file:
-                db_file.write(json.dumps(self.main_state))
-            self.sync_state['synch'] = True
+                db_file.write(json.dumps(self.main_state['tables']))
+            self.sync_state['sync'] = True
             return True
         except Exception as e:
             log.error("Dumping Database failed", e)
             return False
 
-    def __load_main_state__(self):
+    def __load_pre_main_state__(self):
         log.info("Loading the main state to the location: " + defaultKaranaDbPath)
         try:
             with open(defaultKaranaDbPath, 'r') as db_file:
                 content = db_file.read()
-            self.main_state = json.loads(content)
+            self.pre_tables = json.loads(content)
             return True
         except Exception as e:
             log.error("Dumping Database failed", e)
@@ -280,8 +283,8 @@ class KaranaDBWrapper(object):
             log.debug('Main State: ' + str(self.main_state))
             # is one of the following fails the entriy needs to be deleted again TODO: check this!
             try:
-                self.sync_state['synch'] = False
-                self.__update_uuid_index__()
+                self.sync_state['sync'] = False
+                #self.__update_uuid_index__()
                 self.sync_state[userdict['uuid']] = False
                 self.__dump_main_state__()
             except:
@@ -303,7 +306,7 @@ class KaranaDBWrapper(object):
             for key, value in up_res.items():
                 self.tables[table][uuid][key] = value
             log.debug('Main State: ' + str(self.main_state))
-            self.sync_state['synch'] = False
+            self.sync_state['sync'] = False
             self.__dump_main_state__()
             return self.tables[table][uuid]
         except ValueError:
@@ -324,7 +327,7 @@ class KaranaDBWrapper(object):
             key, value = list(mod_res.items())[0]
             self.tables[table][uuid][key] = value
             log.debug('Main State: ' + str(self.main_state))
-            self.sync_state['synch'] = False
+            self.sync_state['sync'] = False
             self.__dump_main_state__()
             return self.tables[table][uuid]
         except ValueError:
@@ -341,7 +344,7 @@ class KaranaDBWrapper(object):
             del self.tables[table][uuid]
             del self.sync_state[uuid]
             log.debug('Main State: ' + str(self.main_state))
-            self.sync_state['synch'] = False
+            self.sync_state['sync'] = False
             self.__dump_main_state__()
             return self.tables[table]
         except ValueError:

@@ -105,3 +105,10 @@ def delete_resource(resources: hug.types.text, resource_id: hug.types.text):
         log.error('Could not delete Resource: ' + resources + ' with uuid ' + resource_id)
         raise falcon.HTTPBadRequest('Delete Resource Error', 'Failed to delete Resource')
 
+@hug.post('/sync/db/all', version=1)
+def sync_db_all_states(body):
+    try:
+        db.__sync_state_action__()
+    except Exception as e:
+        log.error('Failed Synching Database')
+        raise falcon.HTTPBadRequest('Sync DB error', 'Failed to sync db')
