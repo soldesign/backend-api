@@ -59,6 +59,7 @@ class KaranaDBWrapper(object):
         self.uuid_index = self.main_state['uuid_index']
         self.uniqueness_index = self.main_state['uniqueness_index']
         self.sync_state = self.main_state['sync_state']
+        self.metadata = self.main_state['metadata']
         self.schema_index = {}
 
         log.debug("This is how the main_state looks right now: " + str(self.main_state))
@@ -68,7 +69,7 @@ class KaranaDBWrapper(object):
         ##
         log.debug("self.__build_schema_index__():")
         self.__build_schema_index__()
-        self.__sync_state_action__()
+        #self.__sync_state_action__()
 
         log.debug("This is how the main_state looks right now: " + str(self.main_state))
         ##
@@ -76,16 +77,18 @@ class KaranaDBWrapper(object):
 
     def __build_schema_index__(self):
         self.sync_state['sync'] = False
-        for res_table_id in resourceConfig.keys():
+        self.metadata['resourceConfig'] = resourceConfig
+        log.debug('This is how the meta data looks like' + str(resourceConfig))
+        for res_table_id in self.metadata['resourceConfig'].keys():
             log.debug("create table instances ")
             log.debug("pull res_table_name and schema_name from the config")
-            res_table_name = resourceConfig[res_table_id]['metadata']['name']
+            res_table_name = self.metadata['resourceConfig'][res_table_id]['metadata']['name']
             log.debug("create dict with in self.schema_index '" + str(
                 res_table_name) + "' with the resource table name from the config.")
             self.schema_index[res_table_name] = {}
-            log.debug("Schema: " + str(resourceConfig[res_table_id]['metadata']['schema'].keys()))
-            for schema_type in resourceConfig[res_table_id]['metadata']['schema']:
-                schema_name = resourceConfig[res_table_id]['metadata']['schema'][schema_type]
+            log.debug("Schema: " + str(self.metadata['resourceConfig'][res_table_id]['metadata']['schema'].keys()))
+            for schema_type in self.metadata['resourceConfig'][res_table_id]['metadata']['schema']:
+                schema_name = self.metadata['resourceConfig'][res_table_id]['metadata']['schema'][schema_type]
                 log.debug("try to find the schema for this table as mentioned in the config.")
                 if schema_name in globalschemas.keys():
                     self.schema_index[res_table_name][schema_type] = globalschemas[schema_name]
@@ -152,7 +155,8 @@ class KaranaDBWrapper(object):
                         # I think here the uniqueness index should be filled and there it could be checked
                         if validated_entry.errors != {}:
                             raise
-                        self.main_state['tables'][table_name][entry] = json.loads(entry_json)
+                        self.tables[table_name][entry] = json.loads(entry_json)
+                        self.sync_state[entry] = False
                         log.debug("This is how the main_state looks right now: " + str(self.main_state))
                         continue
                     except Exception as e:
