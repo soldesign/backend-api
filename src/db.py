@@ -8,6 +8,7 @@ import sys
 from configuration import resources as resourceConfig
 from configuration import api_metadata
 from synch import SynchInflux
+from gitwrapper import GitWrapper
 import inspect
 import schema
 import json
@@ -60,12 +61,21 @@ class KaranaDBWrapper(object):
                            'uniqueness_index': {}, \
                            'sync_state': {} \
                            }
-        self.__load_pre_main_state__()
         self.tables = self.main_state['tables']
         self.uuid_index = self.main_state['uuid_index']
         self.uniqueness_index = self.main_state['uniqueness_index']
         self.sync_state = self.main_state['sync_state']
+        self.table_meta = self.main_state['table_meta']
         self.schema_index = {}
+
+
+        self.gitwrapper = GitWrapper(self.dump_files['table_db_path'],self.dump_files['table_meta_db_path'])
+        if not self.gitwrapper.check_table_file_exists():
+            self.gitwrapper.create_table_file()
+        if not self.gitwrapper.check_table_meta_file_exists():
+            self.gitwrapper.create_table_meta_file()
+        self.__load_pre_main_state__()
+
 
         log.debug("This is how the main_state looks right now: " + str(self.main_state))
 
@@ -250,10 +260,17 @@ class KaranaDBWrapper(object):
             with open(table_db, 'r') as db_file:
                 content = db_file.read()
             self.pre_tables = json.loads(content)
-            return True
         except Exception as e:
-            log.error("Dumping Database failed", e)
+            log.error("Reading Table data failed", e)
             return False
+        try:
+            with open(table_meta_db, 'r') as db_file:
+                content = db_file.read()
+            self.table_meta['resConfig'] = json.loads(content)
+        except Exception as e:
+            log.error("Reading Table MEta Data failed", e)
+            return False
+        return True
 
     def __push_deb__(self):
         pass
