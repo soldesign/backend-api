@@ -39,7 +39,11 @@ resources = { users['metadata']['res_table_id']: users,\
 api_metadata = {'tenant_id': 'SMNTYQIUB4YTC',
                 'tenant_customer_name': 'Bintumani e.V.',
                 'tenant_login_credentials_path': ['users', 'credentials'], # path to the login credentials (define in Schema: here 'UserSchema')
-                'tenant_used_login_credentials': ['login', 'pwhash']
+                'tenant_used_login_credentials': ['login', 'pwhash'],
+                'logging_config_file': 'logging.yaml.sample',
+                'db_dump': {'table_db_path': "backup/table_db.json",\
+                            'tablestate_db_path': "backup/tablestate_db.json"
+                            }
                }
 
 

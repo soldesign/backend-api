@@ -9,7 +9,7 @@ import crypt
 import time
 import random
 import base64
-from logger import log as log
+from logger import log
 from db import KaranaDBWrapper
 from configuration import api_metadata
 
@@ -17,51 +17,6 @@ FORMAT = 'jwt-example log %(levelname)s: %(message)s'
 logging.basicConfig(level=0, format=FORMAT)
 logging.info(docstring)
 
-
-
-########################################################################################################################
-## this sections represents the example data for this run
-########################################################################################################################
-
-# this key should be generated from a function before the start of hug
-applicationTokenKey = "GlobalKeyGeneratedOnEveryRun"
-# for quicker chacking if token exists, otherwise redirect to token generation
-globaltokenstate = {}
-
-# userdata
-## user-00001
-plaintext_pwd_1 = 'total_beklopptes_pw'
-# only this hashed password should be saved in the db
-hashed_pwd_1 = hash_the_pw(plaintext_pwd_1)
-user_00001 = {'login': {'name': 'micha@zufrieden.de',\
-                        'pwhash': hashed_pwd_1},\
-              'metadata': {'place': 'Berlin'}}
-
-## user-00002
-plaintext_pwd_2 = 'noch_ein_total_beklopptes_pw'
-# only this hashed password should be saved in the db
-hashed_pwd_2 = hash_the_pw(plaintext_pwd_2)
-user_00002 = {'login': {'name': 'frank@zufrieden.de',\
-                        'pwhash': hashed_pwd_2},\
-              'metadata': {'place': 'Weißensee'}}
-
-userdict = {'user-00001': user_00001, 'user-00002': user_00002}
-
-
-
-loginnames = {}
-for userid in userdict.keys():
-    entry = userdict[userid]['login']
-    logging.debug('entry in userdict:' + str(entry))
-    try:
-        loginname = entry['name']
-        loginnames[loginname] = {'userid': userid, 'pwhash': entry['pwhash']}
-    except:
-        logging.warning("The following entry of the userdict is malformed: " + str(entry))
-
-logging.warning('loginnames: ' + str(loginnames))
-
-########################################################################################################################
 
 
 class JWT_Wrapper():
@@ -118,7 +73,7 @@ class JWT_Wrapper():
         if tokenpayload == None:
             tokenpayload = self.__generate_login_payload__(username)
 
-        saved_pw_hash =
+        saved_pw_hash = 'blub'
         hashed_input_pw = self.__generate_pw_hash__(password, salt=usertable[username]['pwhash'][:19])
 
         logging.debug('loginnames: ' + str(loginnames))
@@ -141,10 +96,10 @@ class JWT_Wrapper():
 
 
 
+#testdb = KaranaDBWrapper()
+#jwthandler = JWT_Wrapper(testdb)
 
-jwthandler = JWT_Wrapper()
-
-
+'''
 token_key_authentication = hug.authentication.token(jwthandler.token_verify)
 ###
 
@@ -181,6 +136,6 @@ def token_gen_call(username: hug.types.text, password: hug.types.text):
     #except:
     #    logging.warning("invalid token generation error!! bug in token generation?")
      #   return 'Invalid username and/or password.'
-
+'''
 
 

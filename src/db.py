@@ -6,14 +6,17 @@ import tinydb
 import os
 import sys
 from configuration import resources as resourceConfig
+from configuration import api_metadata
 from synch import SynchInflux
 import inspect
 import schema
 import json
 from uuid import UUID
 
+
+'''
 # get the db file path
-defaultKaranaDbPath = "src/backup/db.json"
+defaultKaranaDbPath = api_metadata['defaultKaranaDbPath']
 __karanaDbPath__ = ""
 
 if 'KARANA_BACKEND_DB' in os.environ.keys():
@@ -30,6 +33,8 @@ if 'KARANA_BACKEND_DB' in os.environ.keys():
         __karanaDbPath__ = defaultKaranaDbPath
 else:
     __karanaDbPath__ = defaultKaranaDbPath
+'''
+
 
 # all defined schemas in a dict
 globalschemas = {}
@@ -43,13 +48,14 @@ log.debug("List of all implemented schemas: " + str(globalschemas.keys()))
 class KaranaDBWrapper(object):
     ''' Karana DB Wrapper'''
 
-    def __init__(self):
-        self.db = {}
+    def __init__(self, dump_files=api_metadata['db_dump'] ):
+        self.dump_files = dump_files
         self.res_schema = None
         log.debug("initialize empty main_state and special 'pointers'")
         self.pre_tables = {}
         self.main_state = {'metadata': {}, \
                            'tables': {}, \
+                           'tablestate': {},\
                            'uuid_index': {}, \
                            'uniqueness_index': {}, \
                            'sync_state': {} \
@@ -215,9 +221,10 @@ class KaranaDBWrapper(object):
         return True
 
     def __dump_main_state__(self):
-        log.info("Dumping the main state to the location: " + defaultKaranaDbPath)
+
+        log.info("Dumping the main state to the location: " + self.dbpath)
         try:
-            with open(defaultKaranaDbPath, 'w')as db_file:
+            with open(self.dbpath, 'w')as db_file:
                 db_file.write(json.dumps(self.main_state['tables']))
             self.sync_state['sync'] = True
             return True

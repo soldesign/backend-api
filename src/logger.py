@@ -2,7 +2,9 @@ import logging
 import logging.config
 import yaml
 import os
-configPath = 'logging.yaml.sample' #path has to be relative to script calling main.py
+from configuration import api_metadata
+
+configPath =  api_metadata['logging_config_file']
 defaultLevel = logging.DEBUG
 if os.path.exists(configPath):
     with open(configPath, 'rt') as f:
