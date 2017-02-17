@@ -221,16 +221,25 @@ class KaranaDBWrapper(object):
         return True
 
     def __dump_main_state__(self):
-
-        log.info("Dumping the main state to the location: " + self.dbpath)
+        table_db = self.dump_files['table_db_path']
+        tablestate_db = self.dump_files['tablestate_db_path']
+        log.info("Dumping the tables to the location: " + table_db)
         try:
-            with open(self.dbpath, 'w')as db_file:
+            with open(table_db, 'w')as db_file:
                 db_file.write(json.dumps(self.main_state['tables']))
-            self.sync_state['sync'] = True
-            return True
         except Exception as e:
-            log.error("Dumping Database failed", e)
+            log.error("Dumping tables Database failed", e)
             return False
+        log.info("Dumping the tablestate to the location: " + tablestate_db)
+        try:
+            with open(tablestate_db, 'w')as db_file:
+                db_file.write(json.dumps(self.main_state['tablestate']))
+        except Exception as e:
+            log.error("Dumping tablestate Database failed", e)
+            return False
+        # here the gitpython stuff goes around
+        self.sync_state['sync'] = True
+        return True
 
     def __load_pre_main_state__(self):
         log.info("Loading the main state to the location: " + defaultKaranaDbPath)
