@@ -40,11 +40,16 @@ class Karana(object):
 ##################################### Schemas ##################################################
 
 
+class CredentialsSchema(Schema):
+    login = fields.Email(required=True)
+    pwhash = fields.String(required=True, validate=validate.Length(min=5,max=128))
+
+
 class UserSchema(Schema):
     uuid = fields.UUID(dump_only=True)
     name = fields.Str(required=True)
     email = fields.Email(required=True)
-    credentials = fields.Dict()
+    credentials = fields.Nested(CredentialsSchema, many=False)
     created_at = fields.DateTime(dump_only=True)
     role = fields.Str(required=True)
     # karanas = fields.Nested('KaranaSchema', many=True, exclude=('user', 'note', 'created_at'))
@@ -59,6 +64,7 @@ class UserDbSchema(Schema):
     uuid = fields.UUID(required=True, dump_only=True)
     name = fields.Str(required=True)
     email = fields.Email(required=True)
+    credentials = fields.Nested(CredentialsSchema, many=False)
     created_at = fields.DateTime(required=True, dump_only=True)  # should be in unix epoch time
     role = fields.Str(required=True)  # should be a OneOf from a list in config
     karanas = fields.List(fields.UUID(), validate=validate.Length(max=1000),
