@@ -243,9 +243,11 @@ class KaranaDBWrapper(object):
         return True
 
     def __load_pre_main_state__(self):
-        log.info("Loading the main state to the location: " + defaultKaranaDbPath)
+        table_db = self.dump_files['table_db_path']
+        table_meta_db = self.dump_files['table_meta_db_path']
+        log.info("Loading the main state to the location: " + table_db)
         try:
-            with open(defaultKaranaDbPath, 'r') as db_file:
+            with open(table_db, 'r') as db_file:
                 content = db_file.read()
             self.pre_tables = json.loads(content)
             return True
