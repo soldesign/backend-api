@@ -55,7 +55,7 @@ class KaranaDBWrapper(object):
         self.pre_tables = {}
         self.main_state = {'metadata': {}, \
                            'tables': {}, \
-                           'tablestate': {},\
+                           'table_meta': {},\
                            'uuid_index': {}, \
                            'uniqueness_index': {}, \
                            'sync_state': {} \
@@ -223,7 +223,7 @@ class KaranaDBWrapper(object):
 
     def __dump_main_state__(self):
         table_db = self.dump_files['table_db_path']
-        tablestate_db = self.dump_files['tablestate_db_path']
+        table_meta_db = self.dump_files['table_meta_db_path']
         log.info("Dumping the tables to the location: " + table_db)
         try:
             with open(table_db, 'w')as db_file:
@@ -231,12 +231,12 @@ class KaranaDBWrapper(object):
         except Exception as e:
             log.error("Dumping tables Database failed", e)
             return False
-        log.info("Dumping the tablestate to the location: " + tablestate_db)
+        log.info("Dumping the table_meta to the location: " + table_meta_db)
         try:
-            with open(tablestate_db, 'w')as db_file:
-                db_file.write(json.dumps(self.main_state['tablestate']))
+            with open(table_meta_db, 'w')as db_file:
+                db_file.write(json.dumps(self.main_state['table_meta']))
         except Exception as e:
-            log.error("Dumping tablestate Database failed", e)
+            log.error("Dumping table_meta Database failed", e)
             return False
         # here the gitpython stuff goes around
         self.sync_state['sync'] = True
