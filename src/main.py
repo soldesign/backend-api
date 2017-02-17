@@ -4,7 +4,7 @@ docstring = """This is the main api which will be started by running run.sh"""
 
 import hug
 import falcon
-from log import log
+from logger import log
 import logging
 from db import KaranaDBWrapper
 import json

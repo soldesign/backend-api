@@ -1,4 +1,5 @@
 falcon==1.0.0
+jwt
 gitdb2==2.0.0
 GitPython==2.1.1
 hug==2.2.0

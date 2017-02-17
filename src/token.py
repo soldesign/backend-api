@@ -9,9 +9,9 @@ import crypt
 import time
 import random
 import base64
-from log import log
+from logger import log as log
 from db import KaranaDBWrapper
-from configuration import loginresource
+from configuration import api_metadata
 
 FORMAT = 'jwt-example log %(levelname)s: %(message)s'
 logging.basicConfig(level=0, format=FORMAT)
@@ -95,7 +95,7 @@ class JWT_Wrapper():
         return crypt.crypt(plaintext_pw, salt=salt)
 
     def __check_pwd__(self, username, input_pw):
-        self.__db__["tables"][loginresource]###################################
+        self.__db__["tables"]###################################
         pass
 
     ## token_key verify

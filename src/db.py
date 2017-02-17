@@ -1,7 +1,7 @@
 ##
 
 docstring = '''db wrapper for the karana backend api'''
-from log import log
+from logger import log
 import tinydb
 import os
 import sys
