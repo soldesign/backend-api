@@ -158,7 +158,8 @@ class KaranaDBWrapper(object):
                         # I think here the uniqueness index should be filled and there it could be checked
                         if validated_entry.errors != {}:
                             raise
-                        self.main_state['tables'][table_name][entry] = json.loads(entry_json)
+                        self.tables[table_name][entry] = json.loads(entry_json)
+                        self.sync_state[table_name][entry] = False
                         log.debug("This is how the main_state looks right now: " + str(self.main_state))
                         continue
                     except Exception as e:
