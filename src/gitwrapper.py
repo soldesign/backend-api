@@ -24,6 +24,8 @@ class GitWrapper(object):
 
     def create_table_file(self):
         log.debug("Creating EmptyTable File ")
+        # maybe it should not be empty (no one can log into this api!)
+        # but do it with the initial user credentials from the multitenant
         try:
             with open(self.table_db_path, 'w')as db_file:
                 db_file.write('{}')

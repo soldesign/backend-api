@@ -59,7 +59,8 @@ class KaranaDBWrapper(object):
                            'table_meta': {},\
                            'uuid_index': {}, \
                            'uniqueness_index': {}, \
-                           'sync_state': {} \
+                           'sync_state': {}, \
+                           'credentials_index': {} \
                            }
         self.tables = self.main_state['tables']
         self.uuid_index = self.main_state['uuid_index']

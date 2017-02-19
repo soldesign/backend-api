@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-docstring=''' A basic example of authentication requests within a hug API, mostly copied from the hug example'''
+docstring=''' The JWT-Wrapper implementation which makes it possible to sign data on the api backend. '''
 
 import hug
 import jwt
@@ -12,10 +12,6 @@ import base64
 from logger import log
 from db import KaranaDBWrapper
 from configuration import api_metadata
-
-FORMAT = 'jwt-example log %(levelname)s: %(message)s'
-logging.basicConfig(level=0, format=FORMAT)
-logging.info(docstring)
 
 
 
@@ -30,7 +26,7 @@ class JWT_Wrapper():
             raise ValueError("The object behind the the given db reference is not an instance of KaranaDBWrapper, but of {0}".format(str(type(db))))
 
         if apikey == None:
-            log.debug("askting the god of randomness for '" + \
+            log.debug("asking the god of randomness for '" + \
                       str(apikeygensize) + \
                       "' random manabits to create the initialization api key. ")
             self.__apikey__ = base64.b64encode(random.getrandbits(apikeygensize).to_bytes(int(apikeygensize/8), "big"))[:-2]
@@ -49,9 +45,11 @@ class JWT_Wrapper():
         assert isinstance(plaintext_pw, object)
         return crypt.crypt(plaintext_pw, salt=salt)
 
-    def __check_pwd__(self, username, input_pw):
-        self.__db__["tables"]###################################
+    def __check_credentials__(self, **kwargs):
         pass
+        #self.__db__["tables"]###################################
+        # get the credentials from config and db
+
 
     ## token_key verify
     def token_verify(self, token: hug.types.text):

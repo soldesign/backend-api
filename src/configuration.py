@@ -11,7 +11,8 @@ users = {'metadata': {'res_table_id': 1,\
                                  'entry_import_schema': "UserDbSchema"
                                  },\
                       'name': "users",\
-                      'unique_schema_fields': ['uuid', 'email']
+                      'unique_schema_fields': ['uuid', 'email'],\
+                      'credentials_login_field': 'email',\
                      }\
         }
 
@@ -21,7 +22,8 @@ karanas = {'metadata': {'res_table_id': 2,\
                                    },\
                         'name': "karanas",\
                         'unique_schema_fields': []
-                       }\
+                        'credentials_login_field': None,\
+                        }\
           }
 
 
@@ -38,7 +40,8 @@ resources = { users['metadata']['res_table_id']: users,\
 
 api_metadata = {'tenant_id': 'SMNTYQIUB4YTC',
                 'tenant_customer_name': 'Bintumani e.V.',
-                'tenant_login_credentials_path': ['users', 'credentials'], # path to the login credentials (define in Schema: here 'UserSchema')
+                'tenant_login_credentials_resource': 'users', # path to the login credentials (define in Schema: here 'UserSchema')
+                'tenant_login_credentials_field': 'credentials', # path to the login credentials (define in Schema: here 'UserSchema')
                 'tenant_used_login_credentials': ['login', 'pwhash'],
                 'logging_config_file': 'src/logging.yaml',
                 'db_dump': {'table_db_path': "storage/table_db.json",\
