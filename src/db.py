@@ -428,9 +428,9 @@ class KaranaDBWrapper(object):
             UUID(uuid, version=4)
             del self.tables[table][uuid]
             del self.sync_state[table][uuid]
-            log.debug('Main State: ' + str(self.main_state))
             self.sync_state['sync'] = False
             self.__dump_main_state__()
+            log.info("This is how the main_state looks right now: " + str(pp.pprint(self.main_state)))
             return self.tables[table]
         except ValueError:
             log.error('The provided uuid is no uuid version 4')
