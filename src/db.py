@@ -67,11 +67,9 @@ class KaranaDBWrapper(object):
         self.table_meta = self.main_state['table_meta']
         self.schema_index = {}
 
-        self.gitwrapper = GitWrapper(self.dump_files['table_db_path'], self.dump_files['table_meta_db_path'])
-        if not self.gitwrapper.check_table_file_exists():
-            self.gitwrapper.create_table_file()
-        if not self.gitwrapper.check_table_meta_file_exists():
-            self.gitwrapper.create_table_meta_file()
+        log.debug("check if the json dumps exist and if not create them and then load them")
+        self.gitwrapper = GitWrapper(self.dump_files)
+        self.__check_json_dumps__()
         self.__load_pre_main_state__()
 
         log.debug("This is how the main_state looks right now: " + str(self.main_state))
@@ -81,9 +79,10 @@ class KaranaDBWrapper(object):
         ##
         log.debug("self.__build_schema_index__():")
         self.__build_schema_index__()
+        log.debug("self.__sync_state_action__():")
         self.__sync_state_action__()
-
-        log.debug("This is how the main_state looks right now: " + str(self.main_state))
+        log.debug("self.__update_uniqueness_index__():")
+        self.__update_uniqueness_index__()
         ##
         log.debug("")
 
@@ -115,8 +114,7 @@ class KaranaDBWrapper(object):
             log.debug(
                 "Now the data structure in the schema_index and the empty table is set up.\n\nLet's populate the table '" + res_table_name + "'")
             if not res_table_name in self.tables:
-                self.tables[res_table_name] = {}  # TODO: is this correct??
-
+                self.tables[res_table_name] = {}
             self.__import_table_from_db__(res_table_name)
         self.sync_state['sync'] = True
 
@@ -137,15 +135,6 @@ class KaranaDBWrapper(object):
                 log.debug("Entry: " + str(entry) + ' length ' + str(len(entry)))
                 if len(entry) == 36:
                     try:
-                        # get the 'metadata' entry which is special and can be imported without checks ?!
-                        # if dict(entry).keys()[0] == 'metadata':
-                        #     try:
-                        #         self.tables[table_name]['metadata'] = dict(entry)
-                        #     except:
-                        #         log.error("could not load 'metadata' field from config/db.")
-                        #         sys.exit(1)
-                        #     continue
-                        # else:
                         # all others will be reimported through a dict to a json again
                         entry_json = json.dumps(self.pre_tables[table_name][entry])
                     except Exception as e:
@@ -163,10 +152,10 @@ class KaranaDBWrapper(object):
                         # now everything is checked and filtered, the entry may be written as element to the table
                         # maybe here or somewhere else a the uniqueness could be checked:
                         # I think here the uniqueness index should be filled and there it could be checked
-                        if validated_entry.errors != {}:
+                        if validated_entry.errors:
                             raise
                         self.tables[table_name][entry] = json.loads(entry_json)
-                        self.sync_state[entry] = False
+                        self.sync_state[entry] = False  # This flag is used for __sync_state_action__
                         log.debug("This is how the main_state looks right now: " + str(self.main_state))
                         continue
                     except Exception as e:
@@ -184,6 +173,17 @@ class KaranaDBWrapper(object):
                                 table_name + \
                                 "'.")
                     exit()
+
+    def __check_json_dumps__(self):
+        """This method checks if the dump files exist"""
+        # TODO add git version tracking
+        if not self.gitwrapper.check_table_file_exists():
+            self.gitwrapper.create_table_file()
+        if not self.gitwrapper.check_table_meta_file_exists():
+            self.gitwrapper.create_table_meta_file()
+
+    ########################################### synch db with harddisc and influx! ##############
+
 
     def __sync_state_action__(self):
         log.info('synching the created user and karanas with the influxdb and dumping the main_stateS')
@@ -227,6 +227,8 @@ class KaranaDBWrapper(object):
         if self.sync_state['sync']:
             self.__dump_main_state__()
         return True
+
+    ########################################### load and dump from saved db! ##############
 
     def __dump_main_state__(self):
         table_db = self.dump_files['table_db_path']
@@ -273,7 +275,9 @@ class KaranaDBWrapper(object):
     def __push_deb__(self):
         pass
 
-    def update_uniqueness_index(self):
+    ########################################### update indices! ##############
+
+    def __update_uniqueness_index__(self):
         log.debug("rebuild the uniquess index in the main_state")
         log.debug("try to go throught all tables and extract all must-be unique entries")
         for tablename in self.tables.keys():
@@ -308,10 +312,9 @@ class KaranaDBWrapper(object):
                 log.warning("uniqueness_index building crashed (malformed data in the main_state?)")
                 log.warning(
                     "The table '{0}' has a malformed 'metadata' entry (['unique_schema_fields'] is missing?), so the uniqueness index can't be built".format(
-                        str(tablename)),e)
+                        str(tablename)), e)
                 # maybe start here a system sanitizer
         log.debug("This is how the main_state looks right now: " + str(self.main_state))
-
 
     def __update_uuid_index__(self):
         try:
@@ -321,6 +324,8 @@ class KaranaDBWrapper(object):
                         self.uuid_index[entry["uuid"]] = table[entry["uuid"]]
         except:
             log.error("could not update uuid index, maybe some tables or entries are broken")
+
+    ####################################### public methods for the endpoints ##########################
 
     def get_res_by_id(self, table: str, uuid: str):
         try:

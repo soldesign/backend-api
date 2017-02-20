@@ -8,9 +8,9 @@ from logger import log
 
 
 class GitWrapper(object):
-    def __init__(self, table_db_path,table_meta_db_path):
-        self.table_db_path = table_db_path
-        self.table_meta_db_path = table_meta_db_path
+    def __init__(self, dump_files):
+        self.table_db_path = dump_files['table_db_path']
+        self.table_meta_db_path = dump_files['table_meta_db_path']
 
     def check_table_file_exists(self):
         if os.path.isfile(self.table_db_path):

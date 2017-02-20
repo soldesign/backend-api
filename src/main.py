@@ -109,7 +109,7 @@ def delete_resource(resources: hug.types.text, resource_id: hug.types.text):
 def sync_db_all_states(body):
     try:
         db.__sync_state_action__()
-        db.update_uniqueness_index()
+        db.__update_uniqueness_index__()
     except Exception as e:
         log.error('Failed Synching Database')
         raise falcon.HTTPBadRequest('Sync DB error', 'Failed to sync db')
