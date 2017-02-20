@@ -17,10 +17,10 @@ def id_generator(size=16, chars=string.ascii_uppercase + string.digits):
 
 
 class User(object):
-    def __init__(self, name, email, role):
+    def __init__(self, name, email, role, credentials):
         self.uuid = uuid.uuid4()
         self.name = name
-        self.credentials = {"password": id_generator()}
+        self.credentials = credentials
         self.email = email
         self.created_at = dt.datetime.now()
         self.role = role
@@ -37,12 +37,17 @@ class Karana(object):
         self.owner = owner
 
 
+class Credential(object):
+    def __init__(self, login, pwhash):
+        self.login = login
+        self.pwhash = pwhash
+
 ##################################### Schemas ##################################################
 
 
 class CredentialsSchema(Schema):
     login = fields.Email(required=True)
-    pwhash = fields.String(required=True, validate=validate.Length(min=5,max=128))
+    pwhash = fields.String(required=True, validate=validate.Length(min=5, max=128))
 
 
 class UserSchema(Schema):

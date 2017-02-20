@@ -14,7 +14,6 @@ from db import KaranaDBWrapper
 from configuration import api_metadata
 
 
-
 class JWT_Wrapper():
     """JWT Wrapper class"""
 

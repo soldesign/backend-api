@@ -21,15 +21,15 @@ karanas = {'metadata': {'res_table_id': 2,\
                                    'entry_import_schema': "KaranaDbSchema"
                                    },\
                         'name': "karanas",\
-                        'unique_schema_fields': []
+                        'unique_schema_fields': [],
                         'credentials_login_field': None,\
                         }\
           }
 
 
 ######## the collection of used resources (only this structure is directly used)
-resources = { users['metadata']['res_table_id']: users,\
-              karanas['metadata']['res_table_id']: karanas\
+resources = { users['metadata']['name']: users,\
+              karanas['metadata']['name']: karanas\
               }
 ################################################################################
 ################################################################################
