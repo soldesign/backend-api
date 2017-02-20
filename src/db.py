@@ -14,6 +14,9 @@ import schema
 import json
 from uuid import UUID
 
+import pprint
+
+pp = pprint.PrettyPrinter(indent=0)
 '''
 # get the db file path
 defaultKaranaDbPath = api_metadata['defaultKaranaDbPath']
@@ -83,8 +86,9 @@ class KaranaDBWrapper(object):
         self.__sync_state_action__()
         log.debug("self.__update_uniqueness_index__():")
         self.__update_uniqueness_index__()
+        log.info("This is how the main_state looks right now: " + str(pp.pprint(self.main_state)))
         ##
-        log.debug("")
+        log.info("")
 
     def __build_schema_index__(self):
         self.sync_state['sync'] = False
@@ -115,6 +119,8 @@ class KaranaDBWrapper(object):
                 "Now the data structure in the schema_index and the empty table is set up.\n\nLet's populate the table '" + res_table_name + "'")
             if not res_table_name in self.tables:
                 self.tables[res_table_name] = {}
+            if not res_table_name in self.sync_state:
+                self.sync_state[res_table_name] = {}
             self.__import_table_from_db__(res_table_name)
         self.sync_state['sync'] = True
 
@@ -155,7 +161,7 @@ class KaranaDBWrapper(object):
                         if validated_entry.errors:
                             raise
                         self.tables[table_name][entry] = json.loads(entry_json)
-                        self.sync_state[entry] = False  # This flag is used for __sync_state_action__
+                        self.sync_state[table_name][entry] = False  # This flag is used for __sync_state_action__
                         log.debug("This is how the main_state looks right now: " + str(self.main_state))
                         continue
                     except Exception as e:
@@ -188,42 +194,43 @@ class KaranaDBWrapper(object):
     def __sync_state_action__(self):
         log.info('synching the created user and karanas with the influxdb and dumping the main_stateS')
         synch = SynchInflux()
-        for uuid in self.sync_state:
-            if uuid != 'sync':
-                log.info('Synching uuid ' + uuid)
-                if not self.sync_state[uuid]:
-                    log.debug("Theses key are usable: " + str(self.tables['users'].keys()))
-                    if uuid in self.tables['users'].keys():
-                        try:
-                            log.debug('Synching User ' + uuid + 'with the influx')
-                            password = self.tables['users'][uuid]['credentials']['pwhash']
-                            if not synch.check_user_read(uuid, password):
-                                if not synch.register_user(uuid, password):
-                                    raise
-                            self.sync_state[uuid] = True
-                            continue
-                        except Exception as e:
-                            log.debug('Synching User ' + uuid + 'with the influx failed', e)
-                            return False
-                    elif uuid in self.tables['karanas'].keys():
-                        try:
-                            log.debug('Synching Karana ' + uuid + 'with the influx')
-                            password = self.tables['karanas'][uuid]['credentials']['password']
-                            user_id = self.tables['karanas'][uuid]['owner']
-                            if not synch.check_karana_read(user_id, uuid, password) or synch.check_karana_write(user_id,
-                                                                                                                uuid,
-                                                                                                                password):
-                                if not synch.register_karana(user_id, uuid, password):
-                                    raise
-                                self.tables['users'][user_id]['karanas'].append(uuid)
-                            self.sync_state[uuid] = True
-                            continue
-                        except:
-                            log.debug('Synching Karana ' + uuid + 'with the influx failed')
-                            return False
-                    else:
-                        log.debug('set synch state true for a non user or karana uuid')
-                        self.sync_state[uuid] = True
+        for uuid in self.sync_state['users']:
+            log.info('Synching uuid ' + uuid)
+            if not self.sync_state['users'][uuid]:
+                log.debug("Theses key are usable: " + str(self.tables['users'].keys()))
+                if uuid in self.tables['users'].keys():
+                    try:
+                        log.debug('Synching User ' + uuid + 'with the influx')
+                        password = self.tables['users'][uuid]['credentials']['pwhash']
+                        if not synch.check_user_read(uuid, password):
+                            if not synch.register_user(uuid, password):
+                                raise
+                        self.sync_state['users'][uuid] = True
+                    except Exception as e:
+                        log.debug('Synching User ' + uuid + 'with the influx failed', e)
+                        return False
+        for uuid in self.sync_state['karanas']:
+            log.info('Synching uuid ' + uuid)
+            if not self.sync_state['karanas'][uuid]:
+                log.debug("Theses key are usable: " + str(self.tables['karanas'].keys()))
+                if uuid in self.tables['karanas'].keys():
+                    try:
+                        log.debug('Synching Karana ' + uuid + 'with the influx')
+                        config = self.tables['karanas'][uuid]['config']
+                        password = config['password']
+                        user_id = self.tables['karanas'][uuid]['owner']
+                        if not synch.check_karana_read(user_id, uuid, password) or not\
+                                synch.check_karana_write(user_id, uuid, password):
+                            if not synch.register_karana(user_id, uuid, password):
+                                raise
+                            if uuid not in self.tables['users'][user_id]['karanas']:
+                                self.tables['users'][str(user_id)]['karanas'].append(uuid)
+                        if not synch.update_karana_config(user_id, uuid, password, config):
+                            raise
+                        self.sync_state['karanas'][uuid] = True
+                    except Exception as e:
+                        log.debug('Synching Karana ' + uuid + 'with the influx failed', e)
+                        return False
         if self.sync_state['sync']:
             self.__dump_main_state__()
         return True
@@ -314,7 +321,7 @@ class KaranaDBWrapper(object):
                     "The table '{0}' has a malformed 'metadata' entry (['unique_schema_fields'] is missing?), so the uniqueness index can't be built".format(
                         str(tablename)), e)
                 # maybe start here a system sanitizer
-        log.debug("This is how the main_state looks right now: " + str(self.main_state))
+            log.info("This is how the main_state looks right now: " + str(pp.pprint(self.main_state)))
 
     def __update_uuid_index__(self):
         try:
@@ -361,7 +368,7 @@ class KaranaDBWrapper(object):
             try:
                 self.sync_state['sync'] = False
                 # self.__update_uuid_index__()
-                self.sync_state[userdict['uuid']] = False
+                self.sync_state[table][userdict['uuid']] = False
                 self.__dump_main_state__()
             except:
                 del self.tables[table][userdict['uuid']]
@@ -383,6 +390,7 @@ class KaranaDBWrapper(object):
                 self.tables[table][uuid][key] = value
             log.debug('Main State: ' + str(self.main_state))
             self.sync_state['sync'] = False
+            self.sync_state[table][uuid] = False
             self.__dump_main_state__()
             return self.tables[table][uuid]
         except ValueError:
@@ -404,6 +412,7 @@ class KaranaDBWrapper(object):
             self.tables[table][uuid][key] = value
             log.debug('Main State: ' + str(self.main_state))
             self.sync_state['sync'] = False
+            self.sync_state[table][uuid] = False
             self.__dump_main_state__()
             return self.tables[table][uuid]
         except ValueError:
@@ -418,7 +427,7 @@ class KaranaDBWrapper(object):
             log.debug("Request id: " + uuid + " of table " + table)
             UUID(uuid, version=4)
             del self.tables[table][uuid]
-            del self.sync_state[uuid]
+            del self.sync_state[table][uuid]
             log.debug('Main State: ' + str(self.main_state))
             self.sync_state['sync'] = False
             self.__dump_main_state__()
