@@ -11,7 +11,7 @@ users = {'metadata': {'res_table_id': 1,\
                                  'entry_import_schema': "UserDbSchema"
                                  },\
                       'name': "users",\
-                      'unique_schema_fields': ['uuid', 'email'],\
+                      'unique_schema_fields': ['uuid', 'email', 'credentials'],\
                       'credentials_login_field': 'email',\
                      }\
         }
@@ -21,7 +21,7 @@ karanas = {'metadata': {'res_table_id': 2,\
                                    'entry_import_schema': "KaranaDbSchema"
                                    },\
                         'name': "karanas",\
-                        'unique_schema_fields': []
+                        'unique_schema_fields': [],\
                         'credentials_login_field': None,\
                         }\
           }

@@ -12,6 +12,7 @@ import base64
 from logger import log
 from db import KaranaDBWrapper
 from configuration import api_metadata
+from configuration import resources
 
 
 
@@ -47,6 +48,23 @@ class JWT_Wrapper():
 
     def __check_credentials__(self, **kwargs):
         pass
+
+    def __login_known__(self, remotelogin):
+        loginresource = api_metadata['tenant_login_credentials_resource']
+        credentials
+        if remotelogin in db.uniqueness_index[]
+            pass
+
+
+        # for res in resources:
+        #     if ("credentials_login_field" in res["metadata"].keys()) and (res["metadata"]["credentials_login_field"] not in  [None, "", " "])
+
+            # else:
+            #     logging.warning("No credentials_login_field defined. No login possible")
+            #     return False
+
+        loginable_resources =
+        loginkeylist = db.tables[]
         #self.__db__["tables"]###################################
         # get the credentials from config and db
 
@@ -63,6 +81,12 @@ class JWT_Wrapper():
                 logging.debug(
                     "This word in 'Authorization' field of the HTTP-Header is not a valid JWT token: '" + word + "'")
         return False
+
+    def get_token(self, credentials):
+
+        if self.__check_credentials__(credentials) :
+
+
 
 
     def token_generate(self, username: hug.types.text, password: hug.types.text, usertable, tokenpayload=None):
