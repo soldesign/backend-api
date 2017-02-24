@@ -4,3 +4,5 @@
 **/db.json
 **/.cache
 src/logging.yaml
+src/backup
+storage/

@@ -7,7 +7,9 @@ import falcon
 from logger import log
 import logging
 from db import KaranaDBWrapper
-import json
+import json#
+
+
 module_log = logging.getLogger(__name__)
 log.info(docstring)
 module_log.info('test for logger name __name__')
@@ -108,7 +110,8 @@ def delete_resource(resources: hug.types.text, resource_id: hug.types.text):
 @hug.post('/sync/db/all', version=1)
 def sync_db_all_states(body):
     try:
-        db.__sync_state_action__()
+        if not db.__sync_state_action__() or db.__update_uniqueness_index__():
+            raise
     except Exception as e:
         log.error('Failed Synching Database')
         raise falcon.HTTPBadRequest('Sync DB error', 'Failed to sync db')

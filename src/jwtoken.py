@@ -15,7 +15,6 @@ from configuration import api_metadata
 from configuration import resources
 
 
-
 class JWT_Wrapper():
     """JWT Wrapper class"""
 

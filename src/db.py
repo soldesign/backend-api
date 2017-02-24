@@ -14,7 +14,9 @@ import schema
 import json
 from uuid import UUID
 
+import pprint
 
+pp = pprint.PrettyPrinter(indent=0)
 '''
 # get the db file path
 defaultKaranaDbPath = api_metadata['defaultKaranaDbPath']
@@ -36,7 +38,6 @@ else:
     __karanaDbPath__ = defaultKaranaDbPath
 '''
 
-
 # all defined schemas in a dict
 globalschemas = {}
 for name, obj in inspect.getmembers(schema):
@@ -49,14 +50,14 @@ log.debug("List of all implemented schemas: " + str(globalschemas.keys()))
 class KaranaDBWrapper(object):
     ''' Karana DB Wrapper'''
 
-    def __init__(self, dump_files=api_metadata['db_dump'] ):
+    def __init__(self, dump_files=api_metadata['db_dump']):
         self.dump_files = dump_files
         self.res_schema = None
         log.debug("initialize empty main_state and special 'pointers'")
         self.pre_tables = {}
         self.main_state = {'metadata': {}, \
                            'tables': {}, \
-                           'table_meta': {},\
+                           'table_meta': {}, \
                            'uuid_index': {}, \
                            'uniqueness_index': {}, \
                            'sync_state': {}, \
@@ -69,14 +70,10 @@ class KaranaDBWrapper(object):
         self.table_meta = self.main_state['table_meta']
         self.schema_index = {}
 
-
-        self.gitwrapper = GitWrapper(self.dump_files['table_db_path'],self.dump_files['table_meta_db_path'])
-        if not self.gitwrapper.check_table_file_exists():
-            self.gitwrapper.create_table_file()
-        if not self.gitwrapper.check_table_meta_file_exists():
-            self.gitwrapper.create_table_meta_file()
+        log.debug("check if the json dumps exist and if not create them and then load them")
+        self.gitwrapper = GitWrapper(self.dump_files)
+        self.__check_json_dumps__()
         self.__load_pre_main_state__()
-
 
         log.debug("This is how the main_state looks right now: " + str(self.main_state))
 
@@ -85,11 +82,13 @@ class KaranaDBWrapper(object):
         ##
         log.debug("self.__build_schema_index__():")
         self.__build_schema_index__()
+        log.debug("self.__sync_state_action__():")
         self.__sync_state_action__()
-
-        log.debug("This is how the main_state looks right now: " + str(self.main_state))
+        log.debug("self.__update_uniqueness_index__():")
+        self.__update_uniqueness_index__()
+        log.info("This is how the main_state looks right now: " + str(pp.pprint(self.main_state)))
         ##
-        log.debug("")
+        log.info("")
 
     def __build_schema_index__(self):
         self.sync_state['sync'] = False
@@ -119,8 +118,9 @@ class KaranaDBWrapper(object):
             log.debug(
                 "Now the data structure in the schema_index and the empty table is set up.\n\nLet's populate the table '" + res_table_name + "'")
             if not res_table_name in self.tables:
-                self.tables[res_table_name] = {}  # TODO: is this correct??
-
+                self.tables[res_table_name] = {}
+            if not res_table_name in self.sync_state:
+                self.sync_state[res_table_name] = {}
             self.__import_table_from_db__(res_table_name)
         self.sync_state['sync'] = True
 
@@ -141,15 +141,6 @@ class KaranaDBWrapper(object):
                 log.debug("Entry: " + str(entry) + ' length ' + str(len(entry)))
                 if len(entry) == 36:
                     try:
-                        # get the 'metadata' entry which is special and can be imported without checks ?!
-                        # if dict(entry).keys()[0] == 'metadata':
-                        #     try:
-                        #         self.tables[table_name]['metadata'] = dict(entry)
-                        #     except:
-                        #         log.error("could not load 'metadata' field from config/db.")
-                        #         sys.exit(1)
-                        #     continue
-                        # else:
                         # all others will be reimported through a dict to a json again
                         entry_json = json.dumps(self.pre_tables[table_name][entry])
                     except Exception as e:
@@ -167,15 +158,15 @@ class KaranaDBWrapper(object):
                         # now everything is checked and filtered, the entry may be written as element to the table
                         # maybe here or somewhere else a the uniqueness could be checked:
                         # I think here the uniqueness index should be filled and there it could be checked
-                        if validated_entry.errors != {}:
+                        if validated_entry.errors:
                             raise
                         self.tables[table_name][entry] = json.loads(entry_json)
-                        self.sync_state[table_name][entry] = False
+                        self.sync_state[table_name][entry] = False  # This flag is used for __sync_state_action__
                         log.debug("This is how the main_state looks right now: " + str(self.main_state))
                         continue
                     except Exception as e:
                         log.error("could not import the following entry: '" + \
-                                  str(entry) + ': ' + str(entry_json) +\
+                                  str(entry) + ': ' + str(entry_json) + \
                                   "'.", e)
                         exit()
                 elif len(entry) == 0:
@@ -189,48 +180,62 @@ class KaranaDBWrapper(object):
                                 "'.")
                     exit()
 
+    def __check_json_dumps__(self):
+        """This method checks if the dump files exist"""
+        # TODO add git version tracking
+        if not self.gitwrapper.check_table_file_exists():
+            self.gitwrapper.create_table_file()
+        if not self.gitwrapper.check_table_meta_file_exists():
+            self.gitwrapper.create_table_meta_file()
+
+    ########################################### synch db with harddisc and influx! ##############
+
+
     def __sync_state_action__(self):
         log.info('synching the created user and karanas with the influxdb and dumping the main_stateS')
-        Synch = SynchInflux()
-        for uuid in self.sync_state:
-            if uuid != 'sync':
-                log.info('Synching uuid ' + uuid)
-                if not self.sync_state[uuid]:
-                    log.debug("Theses key are usable: " + str(self.tables['users'].keys()))
-                    if uuid in self.tables['users'].keys():
-                        try:
-                            log.debug('Synching User ' + uuid + 'with the influx')
-                            password = self.tables['users'][uuid]['credentials']['password']
-                            if not Synch.check_user_read(uuid, password):
-                                if not Synch.register_user(uuid, password):
-                                    raise
-                                self.sync_state[uuid] = True
-                            continue
-                        except:
-                            log.debug('Synching User ' + uuid + 'with the influx failed')
-                            return False
-                    elif uuid in self.tables['karanas'].keys():
-                        try:
-                            log.debug('Synching Karana ' + uuid + 'with the influx')
-                            password = self.tables['karanas'][uuid]['credentials']['password']
-                            user_id = self.tables['karanas'][uuid]['owner']
-                            if not Synch.check_karana_read(user_id, uuid, password) or Synch.check_karana_write(user_id,
-                                                                                                                uuid,
-                                                                                                                password):
-                                if not Synch.register_karana(user_id, uuid, password):
-                                    raise
-                                self.tables['users'][user_id]['karanas'].append(uuid)
-                                self.sync_state[uuid] = True
-                            continue
-                        except:
-                            log.debug('Synching Karana ' + uuid + 'with the influx failed')
-                            return False
-                    else:
-                        log.debug('set synch state true for a non user or karana uuid')
-                        self.sync_state[uuid] = True
+        synch = SynchInflux()
+        for uuid in self.sync_state['users']:
+            log.info('Synching uuid ' + uuid)
+            if not self.sync_state['users'][uuid]:
+                log.debug("Theses key are usable: " + str(self.tables['users'].keys()))
+                if uuid in self.tables['users'].keys():
+                    try:
+                        log.debug('Synching User ' + uuid + 'with the influx')
+                        password = self.tables['users'][uuid]['credentials']['pwhash']
+                        if not synch.check_user_read(uuid, password):
+                            if not synch.register_user(uuid, password):
+                                raise
+                        self.sync_state['users'][uuid] = True
+                    except Exception as e:
+                        log.debug('Synching User ' + uuid + 'with the influx failed', e)
+                        return False
+        for uuid in self.sync_state['karanas']:
+            log.info('Synching uuid ' + uuid)
+            if not self.sync_state['karanas'][uuid]:
+                log.debug("Theses key are usable: " + str(self.tables['karanas'].keys()))
+                if uuid in self.tables['karanas'].keys():
+                    try:
+                        log.debug('Synching Karana ' + uuid + 'with the influx')
+                        config = self.tables['karanas'][uuid]['config']
+                        password = config['password']
+                        user_id = self.tables['karanas'][uuid]['owner']
+                        if not synch.check_karana_read(user_id, uuid, password) or not\
+                                synch.check_karana_write(user_id, uuid, password):
+                            if not synch.register_karana(user_id, uuid, password):
+                                raise
+                            if uuid not in self.tables['users'][user_id]['karanas']:
+                                self.tables['users'][str(user_id)]['karanas'].append(uuid)
+                        if not synch.update_karana_config(user_id, uuid, password, config):
+                            raise
+                        self.sync_state['karanas'][uuid] = True
+                    except Exception as e:
+                        log.debug('Synching Karana ' + uuid + 'with the influx failed', e)
+                        return False
         if self.sync_state['sync']:
             self.__dump_main_state__()
         return True
+
+    ########################################### load and dump from saved db! ##############
 
     def __dump_main_state__(self):
         table_db = self.dump_files['table_db_path']
@@ -245,7 +250,7 @@ class KaranaDBWrapper(object):
         log.info("Dumping the table_meta to the location: " + table_meta_db)
         try:
             with open(table_meta_db, 'w')as db_file:
-                db_file.write(json.dumps(self.main_state['table_meta']))
+                db_file.write(json.dumps(self.main_state['table_meta']['resConfig']))
         except Exception as e:
             log.error("Dumping table_meta Database failed", e)
             return False
@@ -268,6 +273,7 @@ class KaranaDBWrapper(object):
             with open(table_meta_db, 'r') as db_file:
                 content = db_file.read()
             self.table_meta['resConfig'] = json.loads(content)
+            log.debug("This is how table meta looks like: " + str(self.table_meta))
         except Exception as e:
             log.error("Reading Table MEta Data failed", e)
             return False
@@ -276,32 +282,46 @@ class KaranaDBWrapper(object):
     def __push_deb__(self):
         pass
 
-    def update_uniqueness_index(self):
+    ########################################### update indices! ##############
+
+    def __update_uniqueness_index__(self):
         log.debug("rebuild the uniquess index in the main_state")
         log.debug("try to go throught all tables and extract all must-be unique entries")
-        for tablename, table in self.tables.keys(), self.tables.items():
+        for tablename in self.tables.keys():
             try:
-                log.debug("check if the table has unique entries defined in its metadata")
-                if len(table['metadata']['unique_schema_fields']) > 0 and type(table['metadata']['unique_schema_fields']) == list:
+                table = self.tables[tablename]
+                log.debug("check if the table has unique entries defined in its metadata:" + str(self.table_meta))
+                if len(self.table_meta['resConfig'][tablename]['metadata']['unique_schema_fields']) > 0 and type(
+                        self.table_meta['resConfig'][tablename]['metadata']['unique_schema_fields']) == list:
                     log.debug("create an empty dict for the table '{0}' in the uniqueness_index".format(str(tablename)))
                     self.uniqueness_index[tablename] = {}
-                    for field in table['metadata']['unique_schema_fields']:
-                        log.debug("create an empty dict for the field '{0}' in the table-dict of the uniqueness_index".format(str(field)))
+                    for field in self.table_meta['resConfig'][tablename]['metadata']['unique_schema_fields']:
+                        log.debug(
+                            "create an empty dict for the field '{0}' in the table-dict of the uniqueness_index".format(
+                                str(field)))
                         self.uniqueness_index[tablename][field] = {}
-                    log.debug("go through entries in the table {0} and import the unique entries with the a reference to their table entries".format(str(tablename)))
+                    log.debug(
+                        "go through entries in the table {0} and import the unique entries with the a reference to their table entries".format(
+                            str(tablename)))
+                    log.debug('Table: ' + str(self.tables[tablename].keys()))
                     for entry in table.keys():
-                        if entry != 'metadata':
-                            for field in table['metadata']['unique_schema_fields']:
-                                unique_value = table[entry][field]
-                                if unique_value not in self.uniqueness_index[tablename][field].keys():
-                                    self.uniqueness_index[tablename][field][unique_value] = table[entry]
-                                else:
-                                    log.warning("try to add the new entry '{0}' to the uniqueness_index, but there is already an entry. So the main_state is not consistant! \n ignoring the entry ".format(str(entry)))
-                                    # here we need a sanitizer
-            except:
+                        # if entry != 'metadata':
+                        for field in self.table_meta['resConfig'][tablename]['metadata']['unique_schema_fields']:
+                            unique_value = table[entry][field]
+                            if unique_value not in self.uniqueness_index[tablename][field].keys():
+                                self.uniqueness_index[tablename][field][unique_value] = table[entry]
+                            else:
+                                log.warning(
+                                    "try to add the new entry '{0}' to the uniqueness_index, but there is already an entry. So the main_state is not consistant! \n ignoring the entry ".format(
+                                        str(entry)))
+                                # here we need a sanitizer
+            except Exception as e:
                 log.warning("uniqueness_index building crashed (malformed data in the main_state?)")
-                log.warning("The table '{0}' has a malformed 'metadata' entry (['unique_schema_fields'] is missing?), so the uniqueness index can't be built".format(str(tablename)))
+                log.warning(
+                    "The table '{0}' has a malformed 'metadata' entry (['unique_schema_fields'] is missing?), so the uniqueness index can't be built".format(
+                        str(tablename)), e)
                 # maybe start here a system sanitizer
+            log.info("This is how the main_state looks right now: " + str(pp.pprint(self.main_state)))
 
     def __update_uuid_index__(self):
         try:
@@ -311,6 +331,8 @@ class KaranaDBWrapper(object):
                         self.uuid_index[entry["uuid"]] = table[entry["uuid"]]
         except:
             log.error("could not update uuid index, maybe some tables or entries are broken")
+
+    ####################################### public methods for the endpoints ##########################
 
     def get_res_by_id(self, table: str, uuid: str):
         try:
@@ -336,6 +358,8 @@ class KaranaDBWrapper(object):
         try:
             schema_class = self.schema_index[table]['entry_create_schema']
             new_res, errors = schema_class(strict=True).loads(body)
+            if errors:
+                log.error('There were erros while importing: ' + errors)
             userdict = dict(schema_class().dump(new_res).data)
             # unique field check
             self.tables[table][userdict['uuid']] = userdict
@@ -343,8 +367,8 @@ class KaranaDBWrapper(object):
             # is one of the following fails the entriy needs to be deleted again TODO: check this!
             try:
                 self.sync_state['sync'] = False
-                #self.__update_uuid_index__()
-                self.sync_state[userdict['uuid']] = False
+                # self.__update_uuid_index__()
+                self.sync_state[table][userdict['uuid']] = False
                 self.__dump_main_state__()
             except:
                 del self.tables[table][userdict['uuid']]
@@ -366,6 +390,7 @@ class KaranaDBWrapper(object):
                 self.tables[table][uuid][key] = value
             log.debug('Main State: ' + str(self.main_state))
             self.sync_state['sync'] = False
+            self.sync_state[table][uuid] = False
             self.__dump_main_state__()
             return self.tables[table][uuid]
         except ValueError:
@@ -387,6 +412,7 @@ class KaranaDBWrapper(object):
             self.tables[table][uuid][key] = value
             log.debug('Main State: ' + str(self.main_state))
             self.sync_state['sync'] = False
+            self.sync_state[table][uuid] = False
             self.__dump_main_state__()
             return self.tables[table][uuid]
         except ValueError:
@@ -401,10 +427,10 @@ class KaranaDBWrapper(object):
             log.debug("Request id: " + uuid + " of table " + table)
             UUID(uuid, version=4)
             del self.tables[table][uuid]
-            del self.sync_state[uuid]
-            log.debug('Main State: ' + str(self.main_state))
+            del self.sync_state[table][uuid]
             self.sync_state['sync'] = False
             self.__dump_main_state__()
+            log.info("This is how the main_state looks right now: " + str(pp.pprint(self.main_state)))
             return self.tables[table]
         except ValueError:
             log.error('The provided uuid is no uuid version 4')
