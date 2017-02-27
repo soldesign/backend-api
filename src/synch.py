@@ -1,5 +1,6 @@
 """This file checks a given seed of database entries and performs idempoten synchs"""
 from influx import InfluxDBWrapper
+from grafana import GrafanaWrapper
 import logging
 from configparser import ConfigParser
 
@@ -10,6 +11,7 @@ class SynchInflux(object):
     def __init__(self):
         # self.seed = seed
         self.wrapper = InfluxDBWrapper()
+        self.gwrapper = GrafanaWrapper()
         self.log = logging.getLogger(__name__)
 
     def __get_parser__(self):
@@ -23,7 +25,9 @@ class SynchInflux(object):
         """This function checks if a given user can read from the database behind user_id"""
         self.log.info('Check that user ' + user_id + ' exists. And can read.')
         self.wrapper.insert_timepoint(user_id, 'check', 'check', '123')
-        return self.wrapper.get_last_timepoint(user_id, 'check', '123', user_id, password) == 'check'
+        influx_check = self.wrapper.get_last_timepoint(user_id, 'check', '123', user_id, password) == 'check'
+        grafana_check = self.gwrapper.check_datasource(user_id)
+        return influx_check and grafana_check
 
     def check_karana_read(self, user_id, karana_id, password):
         """This function checks if a given karana can read from the database behind user_id"""
@@ -42,7 +46,8 @@ class SynchInflux(object):
         db_created = self.wrapper.create_db(user_id)
         user_created = self.wrapper.create_user(user_id, password)
         privileges = self.wrapper.grant_privilege_user(user_id, user_id, 'read')
-        return db_created and user_created and privileges
+        datasource_registered = self.gwrapper.register_datasource(user_id, password)
+        return db_created and user_created and privileges and datasource_registered
 
     def register_karana(self, user_id, karana_id, password):
         """This function creates a user with read and write privileges on a given db"""
