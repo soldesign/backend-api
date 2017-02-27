@@ -28,9 +28,9 @@ karanas = {'metadata': {'res_table_id': 2,\
 
 
 ######## the collection of used resources (only this structure is directly used)
-resources = { users['metadata']['name']: users,\
-              karanas['metadata']['name']: karanas\
-              }
+resources = {users['metadata']['name']: users,\
+             karanas['metadata']['name']: karanas\
+             }
 ################################################################################
 ################################################################################
 

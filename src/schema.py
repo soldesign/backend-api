@@ -38,9 +38,9 @@ class Karana(object):
 
 
 class Credential(object):
-    def __init__(self, login, pwhash):
+    def __init__(self, login, password):
         self.login = login
-        self.pwhash = pwhash
+        self.password = password
 
 
 class Config(object):
@@ -57,7 +57,7 @@ class Config(object):
 
 class CredentialsSchema(Schema):
     login = fields.Email(required=True)
-    pwhash = fields.String(required=True, validate=validate.Length(min=5, max=128))
+    password = fields.String(required=True, validate=validate.Length(min=5, max=128))
 
 
 class ConfigSchema(Schema):

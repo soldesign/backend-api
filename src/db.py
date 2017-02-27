@@ -201,7 +201,7 @@ class KaranaDBWrapper(object):
                 if uuid in self.tables['users'].keys():
                     try:
                         log.debug('Synching User ' + uuid + 'with the influx')
-                        password = self.tables['users'][uuid]['credentials']['pwhash']
+                        password = self.tables['users'][uuid]['credentials']['password']
                         if not synch.check_user_read(uuid, password):
                             if not synch.register_user(uuid, password):
                                 raise
@@ -333,6 +333,17 @@ class KaranaDBWrapper(object):
         except:
             log.error("could not update uuid index, maybe some tables or entries are broken")
 
+    def __check_uniqueness_index__(self, tablename, entry):
+        log.info('Check if ' + str(entry) + 'has uniqueness collision')
+        for field in self.table_meta['resConfig'][tablename]['metadata']['unique_schema_fields']:
+            if entry[field] in self.uniqueness_index[tablename][field].keys():
+                log.error('Found a collision in the uniquesness index')
+                return False
+        return True
+
+
+
+
     ####################################### public methods for the endpoints ##########################
 
     def get_res_by_id(self, table: str, uuid: str):
@@ -361,20 +372,22 @@ class KaranaDBWrapper(object):
             new_res, errors = schema_class(strict=True).loads(body)
             if errors:
                 log.error('There were erros while importing: ' + errors)
-            userdict = dict(schema_class().dump(new_res).data)
-            # unique field check
-            self.tables[table][userdict['uuid']] = userdict
+            resdict = dict(schema_class().dump(new_res).data)
+            if self.__check_uniqueness_index__(table,resdict):
+                self.tables[table][resdict['uuid']] = resdict
+            else:
+                raise
             log.debug('Main State: ' + str(self.main_state))
             # is one of the following fails the entriy needs to be deleted again TODO: check this!
             try:
                 self.sync_state['sync'] = False
-                # self.__update_uuid_index__()
-                self.sync_state[table][userdict['uuid']] = False
+                self.__update_uniqueness_index__()
+                self.sync_state[table][resdict['uuid']] = False
                 self.__dump_main_state__()
             except:
-                del self.tables[table][userdict['uuid']]
+                del self.tables[table][resdict['uuid']]
                 raise
-            return userdict['uuid']
+            return resdict['uuid']
         except Exception as e:
             log.error("resource json validation or db import error", e)
             return False
