@@ -289,6 +289,7 @@ class KaranaDBWrapper(object):
         log.debug("try to go throught all tables and extract all must-be unique entries")
         for tablename in self.tables.keys():
             try:
+                log.info('Creating uniqueness index for ' + tablename)
                 table = self.tables[tablename]
                 log.debug("check if the table has unique entries defined in its metadata:" + str(self.table_meta))
                 if len(self.table_meta['resConfig'][tablename]['metadata']['unique_schema_fields']) > 0 and type(

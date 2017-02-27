@@ -15,10 +15,14 @@ log.info(docstring)
 module_log.info('test for logger name __name__')
 
 db = KaranaDBWrapper()
+origin = 'http://localhost:3000'
+
+
 
 @hug.get('/{resources}/{resource_id}/', version=1)
 def get_resource(resources: hug.types.text, resource_id: hug.types.text, response):
     """This method returns either the resource with given ID or all resources"""
+    response.set_header('Access-Control-Allow-Origin', origin)
     if resources == 'v1': # This is necessary when resource_id is empty
         resources = resource_id
         resource_id = ''
@@ -41,7 +45,8 @@ def get_resource(resources: hug.types.text, resource_id: hug.types.text, respons
 
 
 @hug.post('/{resources}/new/', version=1)
-def create_resource(resources: hug.types.text, data):
+def create_resource(resources: hug.types.text, data, response):
+    response.set_header('Access-Control-Allow-Origin', origin)
     """This method creates a resource"""
     log.debug("Incoming data is_ " + str(data))
     if resources == 'v1':  # This is necessary when resource_id is empty
@@ -57,8 +62,9 @@ def create_resource(resources: hug.types.text, data):
 
 
 @hug.put('/{resources}/{resource_id}/', version=1)
-def updated_resource(resources: hug.types.text, resource_id: hug.types.text, data):
+def updated_resource(resources: hug.types.text, resource_id: hug.types.text, data, response):
     """This method updates a resource completely"""
+    response.set_header('Access-Control-Allow-Origin', origin)
     if resources == 'v1':  # This is necessary when resource_id is empty
         return False
     try:
@@ -74,8 +80,9 @@ def updated_resource(resources: hug.types.text, resource_id: hug.types.text, dat
 
 
 @hug.patch('/{resources}/{resource_id}/', version=1)
-def modify_resource(resources: hug.types.text, resource_id: hug.types.text, data):
+def modify_resource(resources: hug.types.text, resource_id: hug.types.text, data, response):
     """"This method modifies a resource in this case only one field allowed"""
+    response.set_header('Access-Control-Allow-Origin', origin)
     if resources == 'v1':  # This is necessary when resource_id is empty
         return False
     try:
@@ -90,8 +97,9 @@ def modify_resource(resources: hug.types.text, resource_id: hug.types.text, data
 
 
 @hug.delete('/{resources}/{resource_id}/', version=1)
-def delete_resource(resources: hug.types.text, resource_id: hug.types.text):
+def delete_resource(resources: hug.types.text, resource_id: hug.types.text, response):
     """This method deletes a resource"""
+    response.set_header('Access-Control-Allow-Origin', origin)
     if resources == 'v1':  # This is necessary when resource_id is empty
         return False
     try:
@@ -108,7 +116,8 @@ def delete_resource(resources: hug.types.text, resource_id: hug.types.text):
         raise falcon.HTTPBadRequest('Delete Resource Error', 'Failed to delete Resource')
 
 @hug.post('/sync/db/all', version=1)
-def sync_db_all_states(body):
+def sync_db_all_states(response):
+    response.set_header('Access-Control-Allow-Origin', origin)
     try:
         if not db.__sync_state_action__() or db.__update_uniqueness_index__():
             raise

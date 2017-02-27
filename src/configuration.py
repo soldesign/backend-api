@@ -21,7 +21,7 @@ karanas = {'metadata': {'res_table_id': 2,\
                                    'entry_import_schema': "KaranaDbSchema"
                                    },\
                         'name': "karanas",\
-                        'unique_schema_fields': [],
+                        'unique_schema_fields': ['uuid'],
                         'credentials_login_field': None,\
                         }\
           }
