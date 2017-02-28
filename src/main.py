@@ -22,6 +22,7 @@ def process_cors(request, response):
     log.info('This is how the request looks like:' + request.method)
     response.set_header('Access-Control-Allow-Origin', origin)
     response.set_header('Access-Control-Allow-Methods', 'POST')
+    response.set_header('Access-Control-Allow-Methods', 'PUT')
     response.set_header('Access-Control-Allow-Headers', 'content-type')
 
 

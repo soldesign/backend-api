@@ -96,7 +96,7 @@ class UserDbSchema(Schema):
 
 class KaranaSchema(Schema):
     uuid = fields.UUID(dump_only=True)
-    name = fields.Str(required=True)
+    name = fields.Str(required=True, validate=validate.Length(min=2, max=128))
     note = fields.Str()
     config = fields.Nested(ConfigSchema, many=False)
     created_at = fields.DateTime(dump_only=True)
@@ -110,7 +110,7 @@ class KaranaSchema(Schema):
 
 class KaranaDbSchema(Schema):
     uuid = fields.UUID(required=True, dump_only=True)
-    name = fields.Str(required=True)
+    name = fields.Str(required=True, validate=validate.Length(min=2, max=128))
     note = fields.Str(required=True)
     config = fields.Nested(ConfigSchema, required=True, many=False)
     created_at = fields.DateTime(required=True, dump_only=True)

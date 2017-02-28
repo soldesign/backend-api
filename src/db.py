@@ -400,8 +400,15 @@ class KaranaDBWrapper(object):
             up_res, errors = schema_class(partial=True).loads(body)
             if len(up_res) < 2:
                 raise
+            log.debug('items ' + str(up_res.items()))
+
             for key, value in up_res.items():
-                self.tables[table][uuid][key] = value
+                if type(value) is dict:
+                    for key1, value1 in value.items():
+                        self.tables[table][uuid][key][key1] = value1
+                else:
+                    self.tables[table][uuid][key] = value
+
             log.debug('Main State: ' + str(self.main_state))
             self.sync_state['sync'] = False
             self.sync_state[table][uuid] = False
