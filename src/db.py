@@ -217,6 +217,7 @@ class KaranaDBWrapper(object):
                     try:
                         log.debug('Synching Karana ' + uuid + 'with the influx')
                         config = self.tables['karanas'][uuid]['config']
+                        log.debug('Config = ' + str(config))
                         password = config['password']
                         user_id = self.tables['karanas'][uuid]['owner']
                         if not synch.check_karana_read(user_id, uuid, password) or not\
