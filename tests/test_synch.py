@@ -11,7 +11,7 @@ Synch = SynchInflux()
 
 
 def test_user_synch():
-    assert not Synch.check_user_read('abcdef', 'pw1234')
-    assert Synch.register_user('abcdef', 'pw1234')
-    assert Synch.check_user_read('abcdef', 'pw1234')
-    assert Synch.remove_user('abcdef')
+    assert not Synch.check_user_read('ghf', 'pw1234')
+    assert Synch.register_user('ghf', 'pw1234')
+    assert Synch.check_user_read('ghf', 'pw1234')
+    assert Synch.remove_user('ghf')

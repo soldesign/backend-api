@@ -205,6 +205,9 @@ class KaranaDBWrapper(object):
                         if not synch.check_user_read(uuid, password):
                             if not synch.register_user(uuid, password):
                                 raise
+                        if not synch.check_datasource_registered(uuid):
+                            if not synch.register_datasource(uuid, password):
+                                raise
                         self.sync_state['users'][uuid] = True
                     except Exception as e:
                         log.debug('Synching User ' + uuid + 'with the influx failed', e)
@@ -451,6 +454,7 @@ class KaranaDBWrapper(object):
             del self.tables[table][uuid]
             del self.sync_state[table][uuid]
             self.sync_state['sync'] = False
+            self.__update_uniqueness_index__()
             self.__dump_main_state__()
             log.info("This is how the main_state looks right now: " + str(pp.pprint(self.main_state)))
             return self.tables[table]

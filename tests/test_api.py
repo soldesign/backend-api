@@ -34,7 +34,7 @@ def test_get_user_fail():
 
 def test_create_user_and_karana():
     userdict = {
-        'data': '{"name":"Micha","role":"admin","email":"mic@all.de","credentials":{"login":"mic@all.de","pwhash":"12345"}}'}
+        'data': '{"name":"Micha","role":"admin","email":"mic@all.de","credentials":{"login":"mic@all.de","password":"12345"}}'}
     user = json.dumps(userdict)
     client.request("POST", "/v1/users/new/", user, header)
     resp = client.getresponse()

@@ -43,7 +43,7 @@ api_metadata = {'tenant_id': 'SMNTYQIUB4YTC',
                 'tenant_login_credentials_resource': 'users', # path to the login credentials (define in Schema: here 'UserSchema')
                 'tenant_login_credentials_field': 'credentials', # path to the login credentials (define in Schema: here 'UserSchema')
                 'tenant_used_login_credentials': ['login', 'pwhash'],
-                'logging_config_file': 'logging.yaml',
+                'logging_config_file': 'src/logging.yaml',
                 'db_dump': {'table_db_path': "storage/table_db.json",\
                             'table_meta_db_path': "storage/tablestate_db.json"
                             }

@@ -21,13 +21,17 @@ class SynchInflux(object):
         parser.read('config.ini')
         return parser
 
+    def check_datasource_registered(self,user_id):
+        """This function checks if the users datasource is registered on grafana"""
+        return self.gwrapper.check_datasource(user_id)
+
+
     def check_user_read(self, user_id, password):
         """This function checks if a given user can read from the database behind user_id"""
         self.log.info('Check that user ' + user_id + ' exists. And can read.')
         self.wrapper.insert_timepoint(user_id, 'check', 'check', '123')
         influx_check = self.wrapper.get_last_timepoint(user_id, 'check', '123', user_id, password) == 'check'
-        grafana_check = self.gwrapper.check_datasource(user_id)
-        return influx_check and grafana_check
+        return influx_check
 
     def check_karana_read(self, user_id, karana_id, password):
         """This function checks if a given karana can read from the database behind user_id"""
@@ -40,14 +44,17 @@ class SynchInflux(object):
         self.log.info('Check that karana ' + karana_id + ' exists. And can write.')
         return self.wrapper.insert_timepoint(user_id, 'check', 'check', '123', karana_id, password)
 
+    def register_datasource(self, user_id, password):
+        """This function registers if the users datasource is registered on grafana"""
+        return self.gwrapper.register_datasource(user_id, password)
+
     def register_user(self, user_id, password):
         """This function creates a database for a given user and a user with read privileges on that db"""
         self.log.info('Register user ' + user_id + ' and create db')
         db_created = self.wrapper.create_db(user_id)
         user_created = self.wrapper.create_user(user_id, password)
         privileges = self.wrapper.grant_privilege_user(user_id, user_id, 'read')
-        datasource_registered = self.gwrapper.register_datasource(user_id, password)
-        return db_created and user_created and privileges and datasource_registered
+        return db_created and user_created and privileges
 
     def register_karana(self, user_id, karana_id, password):
         """This function creates a user with read and write privileges on a given db"""
