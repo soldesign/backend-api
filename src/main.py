@@ -15,14 +15,16 @@ log.info(docstring)
 module_log.info('test for logger name __name__')
 
 db = KaranaDBWrapper()
-origin = 'http://localhost:3000'
+origin = 'http://bintumani.karana-desktop-1.mei'
 
 @hug.request_middleware()
 def process_cors(request, response):
     log.info('This is how the request looks like:' + request.method)
     response.set_header('Access-Control-Allow-Origin', origin)
-    response.set_header('Access-Control-Allow-Methods', 'POST')
-    response.set_header('Access-Control-Allow-Methods', 'PUT')
+    if request.get_header('Access-Control-Request-Method') == 'POST':
+        response.set_header('Access-Control-Allow-Methods', 'POST')
+    elif request.get_header('Access-Control-Request-Method') == 'PUT':
+        response.set_header('Access-Control-Allow-Methods', 'PUT')
     response.set_header('Access-Control-Allow-Headers', 'content-type')
 
 
