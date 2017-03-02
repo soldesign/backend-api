@@ -7,6 +7,7 @@ import falcon
 from logger import log
 import logging
 from db import KaranaDBWrapper
+from jwtoken import JWTWrapper
 import json#
 
 
@@ -15,7 +16,10 @@ log.info(docstring)
 module_log.info('test for logger name __name__')
 
 db = KaranaDBWrapper()
-origin = 'http://bintumani.karana-desktop-1.mei'
+jwtoken = JWTWrapper(db)
+token_key_authentication = hug.authentication.token(jwtoken.token_verify)
+
+origin = 'http://localhost:3000'
 
 @hug.request_middleware()
 def process_cors(request, response):
@@ -28,7 +32,7 @@ def process_cors(request, response):
     response.set_header('Access-Control-Allow-Headers', 'content-type')
 
 
-@hug.get('/{resources}/{resource_id}/', version=1)
+@hug.get('/{resources}/{resource_id}/', version=1, requires=token_key_authentication)
 def get_resource(resources: hug.types.text, resource_id: hug.types.text, response):
     """This method returns either the resource with given ID or all resources"""
     if resources == 'v1': # This is necessary when resource_id is empty
@@ -66,6 +70,22 @@ def create_resource(resources: hug.types.text, data, response):
     except Exception as e:
         log.error('Could not Create Resource: ' + resources + ' with data: ' + str(data))
         raise falcon.HTTPBadRequest('Create Resource Error', 'Failed to create new Resource')
+
+
+@hug.post('/{resources}/login/', version=1)
+def login_resource(resources: hug.types.text, user, password, response):
+    """This method creates a resource"""
+    log.debug("Incoming data is_ " + str(user))
+    if resources == 'v1':  # This is necessary when resource_id is empty
+        return False
+    try:
+        results = {'results': [{'token': jwtoken.token_generate(user, password, resources)}]}
+        if results['results'][0]['token']:
+            return json.dumps(results)
+        raise
+    except Exception as e:
+        log.error('Could not login Resource: ' + resources + ' with username: ' + str(user),e)
+        raise falcon.HTTPBadRequest('Create Resource Error', 'Could not login Resource')
 
 
 @hug.put('/{resources}/{resource_id}/', version=1)

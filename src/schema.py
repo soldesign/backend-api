@@ -7,6 +7,7 @@ from marshmallow import Schema
 from marshmallow import fields
 from marshmallow import post_load
 from marshmallow import validate
+import crypt
 
 
 def id_generator(size=16, chars=string.ascii_uppercase + string.digits):
@@ -20,8 +21,9 @@ class User(object):
     def __init__(self, name, email, role, credentials):
         self.uuid = uuid.uuid4()
         self.name = name
-        self.credentials = credentials
+        self.credentials = Credential(**credentials)
         self.email = email
+        self.password_influx = id_generator()
         self.created_at = dt.datetime.now()
         self.role = role
         self.karanas = []
@@ -40,7 +42,7 @@ class Karana(object):
 class Credential(object):
     def __init__(self, login, password):
         self.login = login
-        self.password = password
+        self.password = crypt.crypt(password, salt=crypt.mksalt(method=crypt.METHOD_SHA512))
 
 
 class Config(object):
@@ -72,6 +74,7 @@ class UserSchema(Schema):
     uuid = fields.UUID(dump_only=True)
     name = fields.Str(required=True)
     email = fields.Email(required=True)
+    password_influx = fields.Str()
     credentials = fields.Nested(CredentialsSchema, many=False)
     created_at = fields.DateTime(dump_only=True)
     role = fields.Str(required=True)
@@ -87,6 +90,7 @@ class UserDbSchema(Schema):
     uuid = fields.UUID(required=True, dump_only=True)
     name = fields.Str(required=True)
     email = fields.Email(required=True)
+    password_influx = fields.Str(required=True)
     credentials = fields.Nested(CredentialsSchema, required=True, many=False)
     created_at = fields.DateTime(required=True, dump_only=True)  # should be in unix epoch time
     role = fields.Str(required=True)  # should be a OneOf from a list in config

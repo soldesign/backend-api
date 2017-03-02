@@ -201,7 +201,7 @@ class KaranaDBWrapper(object):
                 if uuid in self.tables['users'].keys():
                     try:
                         log.debug('Synching User ' + uuid + 'with the influx')
-                        password = self.tables['users'][uuid]['credentials']['password']
+                        password = self.tables['users'][uuid]['password_influx']
                         if not synch.check_user_read(uuid, password):
                             if not synch.register_user(uuid, password):
                                 raise
