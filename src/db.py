@@ -187,11 +187,13 @@ class KaranaDBWrapper(object):
 
     def __check_json_dumps__(self):
         """This method checks if the dump files exist"""
-        # TODO add git version tracking
+        if not self.gitwrapper.check_git_repo_exists():
+            self.gitwrapper.create_git_repo()
         if not self.gitwrapper.check_table_file_exists():
             self.gitwrapper.create_table_file()
         if not self.gitwrapper.check_table_meta_file_exists():
             self.gitwrapper.create_table_meta_file()
+
 
     ########################################### synch db with harddisc and influx! ##############
 
@@ -263,7 +265,12 @@ class KaranaDBWrapper(object):
         except Exception as e:
             log.error("Dumping table_meta Database failed", e)
             return False
-        # here the gitpython stuff goes around
+        try:
+            if not self.gitwrapper.commit_changes():
+                raise
+        except:
+            log.error('could not commit changes')
+            return False
         self.sync_state['sync'] = True
         return True
 

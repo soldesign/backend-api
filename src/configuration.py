@@ -45,7 +45,8 @@ api_metadata = {'tenant_id': 'SMNTYQIUB4YTC',
                 'tenant_used_login_credentials': ['login', 'pwhash'],
                 'logging_config_file': 'src/logging.yaml',
                 'db_dump': {'table_db_path': "storage/table_db.json",\
-                            'table_meta_db_path': "storage/tablestate_db.json"
+                            'table_meta_db_path': "storage/tablestate_db.json",
+                            'table_db_folder': "storage/",
                             }
                }
 
