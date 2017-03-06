@@ -87,7 +87,7 @@ def test_check_if_karana_config_was_created():
 
 
 def test_update_user():
-    user_data = json.dumps({'data': '{"name":"Michael","email":"micha@all.de"}'})
+    user_data = json.dumps({'data': '{"name":"Michael","role":"client"}'})
     client.request("PUT", "/v1/users/" + uuid, user_data, header)
     resp = client.getresponse()
     assert resp.status < 300
