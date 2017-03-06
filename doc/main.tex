@@ -76,8 +76,7 @@ BCOR5mm, % Binding correction
 
 \section*{Abstract} % This section will not appear in the table of contents due to the star (\section*)
 
-\lipsum[1] % Dummy text
-
+Karana is a project with the aim of developing a cheap, open source monitoring framework. This document describes the design of the Karana Back End (KBE). The KBE is the IT backbone of the hardware monitoring device. The KBE combines a well established open source approach for time series based data collection and data visualization with a small scale management API framework and an automated deployment scheme. While there is plenty of information on the Internet how to combine \href{https://www.influxdata.com/}{InfluxDB} with \href{http://grafana.org/}{Grafana} we focus in this documentation on the architecture of the management API and the automated deployment. The managment API is written in the Python framework \href{http://www.hug.rest/}{Hug} which is an API extension of the WSGI framework \href{http://falconframework.org/}{Falcon}. The automated deployment is a collection of scripts written with the powerful automation tool \href{https://www.ansible.com}{Ansible}. 
 %----------------------------------------------------------------------------------------
 %	AUTHOR AFFILIATIONS
 %----------------------------------------------------------------------------------------
@@ -96,11 +95,24 @@ BCOR5mm, % Binding correction
 
 \section{Introduction}
 
-A statement\footnote{Example of a footnote} requiring citation \cite{Figueredo:2009dg}.
+The KBE is an IT solution for monitoring data. The KBE provides an IT infrastructure suitable for multiple independent projects on one server, but can also be enrolled separately on different servers for each project. 
 
-\lipsum[1-3] % Dummy text
+The infrastructure relies on several virtual machines managed by \href{https://linuxcontainers.org/lxd/}{LXD}. All incoming requests to the server are directed to a load balancer which forwards the requests based on availability to one of two load balancer which distribute the requests to the correct instances of a project. The load balancing is realized with \href{http://www.haproxy.org/}{HAproxy}. An instance is composed of three LXD containers holding an influxDB instance, a Grafana instance and an manage mentAPI instance. Having a plain Linux (tested on Xenial, Ubuntu 16.04) server with only python installed (a dependency for Ansible) the Ansible script will deploy the IT infrastructure visualized in Figure \ref{figure:infrastructrue} almost automatically. 
 
-Some mathematics in the text: $\cos\pi=-1$ and $\alpha$.
+\begin{figure}
+	\centering 
+	\begin{tikzpicture}
+	\draw (0,0) -- (0,1) -- (2,1) -- (2,0) -- (0,0) ;
+	\draw[dotted] (1,0.5) node {Haproxy};	
+	\draw (3,1) -- (3,2) -- (5,2) -- (5,1) -- (3,1) ;
+	\draw[dotted] (4,1.5) node {Haproxy1};	
+	\draw (3,-1) -- (3,0) -- (5,0) -- (5,-1) -- (3,-1) ;
+	\draw[dotted] (4,-0.5) node {Haproxy2};	
+	\draw (6,0) -- (6,1) -- (8,1) -- (8,0) -- (6,0) ;
+	\end{tikzpicture}
+	\caption[KBE IT infrastructure]{The Karana Back End IT infrastructure} % The text in the square bracket is the caption for the list of figures while the text in the curly brackets is the figure caption
+	\label{figure:infrastructrue}
+\end{figure}
  
 %----------------------------------------------------------------------------------------
 %	METHODS
@@ -110,12 +122,7 @@ Some mathematics in the text: $\cos\pi=-1$ and $\alpha$.
 
 Reference to Figure~\vref{fig:gallery}. % The \vref command specifies the location of the reference
 
-\begin{figure}[tb]
-\centering 
-\includegraphics[width=0.5\columnwidth]{GalleriaStampe} 
-\caption[An example of a floating figure]{An example of a floating figure (a reproduction from the \emph{Gallery of prints}, M.~Escher,\index{Escher, M.~C.} from \url{http://www.mcescher.com/}).} % The text in the square bracket is the caption for the list of figures while the text in the curly brackets is the figure caption
-\label{fig:gallery} 
-\end{figure}
+
 
 \lipsum[5] % Dummy text
 
@@ -228,10 +235,6 @@ Reference the figure composed of multiple subfigures as Figure~\vref{fig:esempio
 
 \begin{figure}[tb]
 \centering
-\subfloat[A city market.]{\includegraphics[width=.45\columnwidth]{Lorem}} \quad
-\subfloat[Forest landscape.]{\includegraphics[width=.45\columnwidth]{Ipsum}\label{fig:ipsum}} \\
-\subfloat[Mountain landscape.]{\includegraphics[width=.45\columnwidth]{Dolor}} \quad
-\subfloat[A tile decoration.]{\includegraphics[width=.45\columnwidth]{Sit}}
 \caption[A number of pictures.]{A number of pictures with no common theme.} % The text in the square bracket is the caption for the list of figures while the text in the curly brackets is the figure caption
 \label{fig:esempio}
 \end{figure}
