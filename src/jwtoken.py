@@ -77,7 +77,7 @@ class JWTWrapper():
                 return validPayloadFromToken
             except Exception as e:
                 log.debug(
-                    "This word in 'Authorization' field of the HTTP-Header is not a valid JWT token: '" + word + "'", e)
+                    "This word in 'Authorization' field of the HTTP-Header is not a valid JWT token: '" + word + "'")
         return False
 
     def get_token(self, credentials):
@@ -115,6 +115,7 @@ class JWTWrapper():
 
                 return generated_token.decode('utf-8')
             else:
+                log.debug("hashed input pw did not match credentials")
                 return False
         except:
             return False

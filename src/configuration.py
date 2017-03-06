@@ -4,7 +4,7 @@
 ################################################################################
 ## resource definition section
 ################################################################################
-
+mode ='dev' # mode can be dev or prod
 ####### single resources (take care with the structure)
 users = {'metadata': {'res_table_id': 1,\
                       'schema': {'entry_create_schema': "UserSchema",\

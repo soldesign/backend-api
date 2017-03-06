@@ -2,6 +2,7 @@ cffi==1.9.1
 cryptography==1.7.2
 Cython==0.25.2
 decorator==4.0.11
+Faker==0.7.3
 falcon==1.0.0
 gitdb2==2.0.0
 GitPython==2.1.1
@@ -11,6 +12,7 @@ idna==2.2
 ipython==5.3.0
 ipython-genutils==0.1.0
 marshmallow==2.12.2
+mixer==5.6.6
 pexpect==4.2.1
 pickleshare==0.7.4
 pkg-resources==0.0.0

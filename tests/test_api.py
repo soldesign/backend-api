@@ -24,6 +24,21 @@ header = TestHTTP.__get_header__(content_type="application/json")
 # http://127.0.0.1:8000/v1/users/new body='{"name":"Micha","role":"admin","email":"mica@all.de"}'
 uuid = "0"
 uuid2 = "0"
+token = ''
+
+def test_get_auth_token():
+    client.request("POST", "/v1/users/login", '{"user":"admin@example.com","password":"admin"}', headers=header)
+    resp = client.getresponse()
+    assert resp.status < 300
+    tmp = resp.read().decode('utf-8')
+    results = json.loads(json.loads(tmp))
+    global token
+    token = results['results'][0]['token']
+    global header
+    header = TestHTTP.__get_header__(auth='bearer', token=token, content_type="application/json")
+    print(token)
+
+
 
 
 def test_get_user_fail():

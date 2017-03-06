@@ -18,7 +18,7 @@ def id_generator(size=16, chars=string.ascii_uppercase + string.digits):
 
 
 class User(object):
-    def __init__(self, name, email, role, credentials):
+    def __init__(self, name, email, credentials, role='client'):
         self.uuid = uuid.uuid4()
         self.name = name
         self.credentials = Credential(**credentials)
@@ -77,7 +77,7 @@ class UserSchema(Schema):
     password_influx = fields.Str()
     credentials = fields.Nested(CredentialsSchema, many=False)
     created_at = fields.DateTime(dump_only=True)
-    role = fields.Str(required=True)
+    role = fields.Str()
     # karanas = fields.Nested('KaranaSchema', many=True, exclude=('user', 'note', 'created_at'))
     karanas = fields.List(fields.UUID(), validate=validate.Length(max=1000))
 

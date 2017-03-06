@@ -56,7 +56,7 @@ def get_resource(resources: hug.types.text, resource_id: hug.types.text, respons
         raise falcon.HTTPBadRequest('Get Resource Error', 'Failed to get requested resources Resource')
 
 
-@hug.post('/{resources}/new/', version=1)
+@hug.post('/{resources}/new/', version=1,requires=token_key_authentication)
 def create_resource(resources: hug.types.text, data, response):
     """This method creates a resource"""
     log.debug("Incoming data is_ " + str(data))
@@ -88,7 +88,7 @@ def login_resource(resources: hug.types.text, user, password, response):
         raise falcon.HTTPBadRequest('Create Resource Error', 'Could not login Resource')
 
 
-@hug.put('/{resources}/{resource_id}/', version=1)
+@hug.put('/{resources}/{resource_id}/', version=1,requires=token_key_authentication)
 def updated_resource(resources: hug.types.text, resource_id: hug.types.text, data, response):
     """This method updates a resource completely"""
     if resources == 'v1':  # This is necessary when resource_id is empty
@@ -105,7 +105,7 @@ def updated_resource(resources: hug.types.text, resource_id: hug.types.text, dat
         raise falcon.HTTPBadRequest('Update Resource Error', 'Failed to update Resource')
 
 
-@hug.patch('/{resources}/{resource_id}/', version=1)
+@hug.patch('/{resources}/{resource_id}/', version=1,requires=token_key_authentication)
 def modify_resource(resources: hug.types.text, resource_id: hug.types.text, data, response):
     """"This method modifies a resource in this case only one field allowed"""
     if resources == 'v1':  # This is necessary when resource_id is empty
@@ -121,7 +121,7 @@ def modify_resource(resources: hug.types.text, resource_id: hug.types.text, data
         raise falcon.HTTPBadRequest('Modify Resource Error', 'Failed to modify Resource')
 
 
-@hug.delete('/{resources}/{resource_id}/', version=1)
+@hug.delete('/{resources}/{resource_id}/', version=1,requires=token_key_authentication)
 def delete_resource(resources: hug.types.text, resource_id: hug.types.text, response):
     """This method deletes a resource"""
     if resources == 'v1':  # This is necessary when resource_id is empty
@@ -139,7 +139,7 @@ def delete_resource(resources: hug.types.text, resource_id: hug.types.text, resp
         log.error('Could not delete Resource: ' + resources + ' with uuid ' + resource_id)
         raise falcon.HTTPBadRequest('Delete Resource Error', 'Failed to delete Resource')
 
-@hug.post('/sync/db/all', version=1)
+@hug.post('/sync/db/all', version=1,requires=token_key_authentication)
 def sync_db_all_states(response):
     try:
         if not db.__sync_state_action__() or db.__update_uniqueness_index__():

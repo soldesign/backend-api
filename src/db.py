@@ -7,6 +7,8 @@ import os
 import sys
 from configuration import resources as resourceConfig
 from configuration import api_metadata
+from configuration import mode
+from fixtures import create_admin_user
 from synch import SynchInflux
 from gitwrapper import GitWrapper
 import inspect
@@ -86,6 +88,9 @@ class KaranaDBWrapper(object):
         self.__sync_state_action__()
         log.debug("self.__update_uniqueness_index__():")
         self.__update_uniqueness_index__()
+        if mode == 'dev':
+            log.info('adding admin user for development')
+            self.add_new_res('users', create_admin_user())
         log.info("This is how the main_state looks right now: " + str(pp.pprint(self.main_state)))
         ##
         log.info("")

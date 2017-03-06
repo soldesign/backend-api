@@ -31,7 +31,7 @@ class DBHTTPSetup(object):
             self.log.error('The http connection to the host: ' + self.db + ' instance could not be instanciated')
             return None
 
-    def __get_header__(self, user=None, password=None, content_type="application/x-www-form-urlencoded"):
+    def __get_header__(self, user=None, password=None, token=None, auth='basic', content_type="application/x-www-form-urlencoded"):
         """This returns the header with correct basic auth"""
         self.log.info('Create Header')
         parser = self.__get_parser__()
@@ -42,7 +42,12 @@ class DBHTTPSetup(object):
         self.log.info('Create Header')
         user_and_pass = base64.b64encode(
             bytes(user + ':' + password, "utf-8")).decode("ascii")
-        headers = {'Authorization': 'Basic %s' % user_and_pass, "Content-type": content_type}
+        if auth == 'basic':
+            headers = {'Authorization': 'Basic %s' % user_and_pass, "Content-type": content_type}
+        elif auth == 'bearer':
+            headers = {'Authorization': 'Bearer ' + token, "Content-type": content_type}
+        else:
+            headers = {"Content-type": content_type}
         self.log.info('header:' + str(headers))
         return headers
 
