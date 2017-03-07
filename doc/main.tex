@@ -1,0 +1,181 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Arsclassica Article
+% LaTeX Template
+% Version 1.1 (10/6/14)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Original author:
+% Lorenzo Pantieri (http://www.lorenzopantieri.net) with extensive modifications by:
+% Vel (vel@latextemplates.com)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[draft=false,
+10pt, % Main document font size
+a4paper, % Paper type, use 'letterpaper' for US Letter paper
+oneside, % One page layout (no page indentation)
+%twoside, % Two page layout (page indentation for binding and different headers)
+headinclude,footinclude, % Extra spacing for the header and footer
+ % Binding correction
+]{scrartcl}
+
+\input{structure.tex} % Include the structure.tex file which specified the document structure and layout
+
+\hyphenation{Fortran hy-phen-ation} % Specify custom hyphenation points in words with dashes where you would like hyphenation to occur, or alternatively, don't put any dashes in a word to stop hyphenation altogether
+
+%----------------------------------------------------------------------------------------
+%	TITLE AND AUTHOR(S)
+%----------------------------------------------------------------------------------------
+
+\title{\normalfont\spacedallcaps{Architecture of the Karana Back End}} % The article title
+
+\author{\spacedlowsmallcaps{Michael G\"otte*}} % The article author(s) - author affiliations need to be specified in the AUTHOR AFFILIATIONS block
+
+\date{\today} % An optional date to appear under the author(s)
+
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+%----------------------------------------------------------------------------------------
+%	HEADERS
+%----------------------------------------------------------------------------------------
+
+\renewcommand{\sectionmark}[1]{\markright{\spacedlowsmallcaps{#1}}} % The header for all pages (oneside) or for even pages (twoside)
+%\renewcommand{\subsectionmark}[1]{\markright{\thesubsection~#1}} % Uncomment when using the twoside option - this modifies the header on odd pages
+\lehead{\mbox{\llap{\small\thepage\kern1em\color{halfgray} \vline}\color{halfgray}\hspace{0.5em}\rightmark\hfil}} % The header style
+
+\pagestyle{scrheadings} % Enable the headers specified in this block
+
+%----------------------------------------------------------------------------------------
+%	TABLE OF CONTENTS & LISTS OF FIGURES AND TABLES
+%----------------------------------------------------------------------------------------
+
+\maketitle % Print the title/author/date block
+
+\setcounter{tocdepth}{2} % Set the depth of the table of contents to show sections and subsections only
+
+\tableofcontents % Print the table of contents
+
+
+
+
+
+%----------------------------------------------------------------------------------------
+%	ABSTRACT
+%----------------------------------------------------------------------------------------
+
+\section*{Abstract} % This section will not appear in the table of contents due to the star (\section*)
+
+Karana is a project with the aim of developing a cheap, open source monitoring framework. This document describes the design of the Karana Back End (KBE). The KBE is the IT backbone of the hardware monitoring device. The KBE combines a well established open source approach for time series based data collection and data visualization with a small scale management API framework and an automated deployment scheme. While there is plenty of information on the Internet how to combine \href{https://www.influxdata.com/}{InfluxDB} with \href{http://grafana.org/}{Grafana} we focus in this documentation on the architecture of the management API and the automated deployment. The managment API is written in the Python framework \href{http://www.hug.rest/}{Hug} which is an API extension of the WSGI framework \href{http://falconframework.org/}{Falcon}. The automated deployment is a collection of scripts written with the powerful automation tool \href{https://www.ansible.com}{Ansible}. 
+%----------------------------------------------------------------------------------------
+%	AUTHOR AFFILIATIONS
+%----------------------------------------------------------------------------------------
+
+{\let\thefootnote\relax\footnotetext{* \textit{MicroEnergy International, Berlin, Germany}}}
+
+%{\let\thefootnote\relax\footnotetext{\textsuperscript{1} \textit{Department of Chemistry, University of Examples, London, United Kingdom}}}
+
+%----------------------------------------------------------------------------------------
+
+\newpage % Start the article content on the second page, remove this if you have a longer abstract that goes onto the second page
+
+%----------------------------------------------------------------------------------------
+%	INTRODUCTION
+%----------------------------------------------------------------------------------------
+
+\section{Introduction}
+
+The KBE is an IT solution for monitoring data. The KBE provides an IT infrastructure suitable for multiple independent projects on one server, but can also be enrolled separately on different servers for each project. 
+
+The infrastructure relies on several virtual machines managed by \href{https://linuxcontainers.org/lxd/}{LXD}. All incoming requests to the server are directed to a load balancer which forwards the requests based on availability to one of two load balancer which distribute the requests to the correct instances of a project. The load balancing is realized with \href{http://www.haproxy.org/}{HAproxy}. An instance is composed of three LXD containers holding an influxDB instance, a Grafana instance and an management API instance. Having a plain Linux (tested on Xenial, Ubuntu 16.04) server with only python installed (a dependency for Ansible) the Ansible script will deploy the IT infrastructure visualized in Figure \ref{figure:infrastructrue} almost automatically. 
+
+\begin{figure}
+	\centering 
+	\begin{tikzpicture}
+	\draw[dotted] (-2.5,0.5) node {HTTP Requests};	
+	\draw[decoration={markings,mark=at position 1 with {\arrow[scale=3]{>}}},
+	postaction={decorate},] (-1,0.5) -- (0,0.5);
+	\draw (0,0) -- (0,1) -- (2,1) -- (2,0) -- (0,0) ;
+	\draw[dotted] (1,0.5) node {Haproxy};	
+	\draw (3,1) -- (3,2) -- (5,2) -- (5,1) -- (3,1) ;
+	\draw[dotted] (4,1.5) node {Haproxy1};	
+	\draw (3,-1) -- (3,0) -- (5,0) -- (5,-1) -- (3,-1) ;
+	\draw[dotted] (4,-0.5) node {Haproxy2};	
+	\draw (7,0.75) -- (7,1.25) -- (9,1.25) -- (9,0.75) -- (7,0.75) ;	
+	\draw[dotted] (8,1) node {InfluxDB};	
+	\draw (7,0.25) -- (7,0.75) -- (9,0.75) -- (9,0.25) -- (7,0.25) ;
+	\draw[dotted] (8,0.5) node {Grafana};	
+	\draw (7,-0.25) -- (7,0.25) -- (9,0.25) -- (9,-0.25) -- (7,-0.25) ;
+	\draw[dotted] (8,0) node {API};	
+	\draw (6.75,-0.25) -- (6.75,1.25) -- (7,1.25) -- (7,-0.25) -- (6.75,-0.25) ;
+	\draw[dotted] (6.875,0.5) node {1};	
+	\draw[decoration={markings,mark=at position 1 with {\arrow[scale=3]{>}}},
+	postaction={decorate},] (2.1,0.6) -- (2.9,1.4);
+	\draw[decoration={markings,mark=at position 1 with {\arrow[scale=3]{>}}},
+	postaction={decorate},] (2.1,0.4) -- (2.9,-0.4);
+	\draw (5.1,1.4) -- (6,0.5) -- (5.1,-0.4);
+	\draw[decoration={markings,mark=at position 1 with {\arrow[scale=3]{>}}},
+	postaction={decorate},] (6,0.5) -- (6.75,0.5);
+	\draw (7,3.75) -- (7,4.25) -- (9,4.25) -- (9,3.75) -- (7,3.75) ;	
+	\draw[dotted] (8,4) node {InfluxDB};	
+	\draw (7,3.25) -- (7,3.75) -- (9,3.75) -- (9,3.25) -- (7,3.25) ;
+	\draw[dotted] (8,3.5) node {Grafana};	
+	\draw (7,3.75) -- (7,3.25) -- (9,3.25) -- (9,2.75) -- (7,2.75) ;
+	\draw[dotted] (8,3) node {API};	
+	\draw (6.75,2.75) -- (6.75,4.25) -- (7,4.25) -- (7,2.75) -- (6.75,2.75) ;
+	\draw[dotted] (6.875,3.5) node {2};	
+	\draw[decoration={markings,mark=at position 1 with {\arrow[scale=3]{>}}},
+	postaction={decorate},] (6,0.5) -- (6.75,3.5);
+	\draw[decoration={markings,mark=at position 1 with {\arrow[scale=3]{>}}},
+	postaction={decorate},] (6,0.5) -- (6.75,2);
+	\draw[dotted] (7,2) node {.....};
+
+	\end{tikzpicture}
+	\caption[KBE IT infrastructure]{The Karana Back End IT infrastructure} % The text in the square bracket is the caption for the list of figures while the text in the curly brackets is the figure caption
+	\label{figure:infrastructrue}
+\end{figure}
+
+The next sections will explain  the architecture of the IT infrastructure and how to build it with Ansible. After that we will discuss the software design of the management API and how to use the API. 
+ 
+%----------------------------------------------------------------------------------------
+%	Deployment
+%----------------------------------------------------------------------------------------
+
+\section{Building the Infrastructure}
+\input{files/deploy.tex}
+
+
+\section{Configuring an Instance}\label{section:instance}
+\input{files/instance.tex}
+
+
+%----------------------------------------------------------------------------------------
+%	Management API
+%----------------------------------------------------------------------------------------
+
+\section{Managment API}
+\input{files/api.tex}
+
+%----------------------------------------------------------------------------------------
+%	BIBLIOGRAPHY
+%----------------------------------------------------------------------------------------
+
+\renewcommand{\refname}{\spacedlowsmallcaps{References}} % For modifying the bibliography heading
+
+\bibliographystyle{unsrt}
+
+\bibliography{sample.bib} % The file containing the bibliography
+
+%----------------------------------------------------------------------------------------
+
+\end{document}

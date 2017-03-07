@@ -1,0 +1,147 @@
+\lstset{language=Python}          % Set your language (you can change the language for each code-block optionally)
+Simply spoken the management API enables maintaining the KBE without using command line tools. The API defines several end points which react on incoming HTTP requests. The body format of the HTTP requests (for GET, POST, PUT, PATCH, DELETE) is \href{http://json.org/}{JSON}. Subsection \ref{subsection:endpoints} will specify the behavior of these endpoint. These endpoints can be used to write front ends for better user experience. 
+The API is written in Python using the \href{http://www.hug.rest/}{Hug} framework.
+
+For the rest of this Section we assume that the reader has cloned the git repository \href{http://gitlab.me-soldesign.com/karana/backend-api.git}{Git:KBE}. This means that references to files are always with respect to the base folder of the project. 
+
+\subsection{Configuration}
+Configuring the API is fairly simple if one has the credentials of the associated influxDB and Grafana instances. Ideally the configuration of the API is done by configuring the instance as described in Section \ref{section:instance}. For completeness we will show how to configure the API by hand. 
+
+There are basically two files which need modification for configuration, the \textit{config.ini} file which holds the information for the credentials of the influxDB and the Grafana instance and the \textit{src/configuration.py} file which holds information on what models are used.
+%------------------------------------------------
+
+\subsubsection{The \textit{config.ini} File}
+An example  \textit{config.ini} looks like in Listing \ref{listing:config.ini}.
+\lstset{language=XML}  
+\begin{lstlisting}[caption={Example of a \textit{config.ini} file},label={listing:config.ini}]
+[influxdb]
+host = 10.0.12.101
+port = 8083
+user = admin
+pass = influxpw
+
+[grafana]
+host = 10.0.12.102
+port = 3000
+user = karanaadmin
+pass = karanapasswort
+
+
+[test]
+host = localhost
+port = 8000
+user = test
+pass = test
+\end{lstlisting}
+One needs to specify the host, the port, the user, and a password. 
+
+\subsubsection{The \textit{src/configuration.py} File}
+
+For an example  of a \textit{src/configuration.py} file see the project repository. In general there are two sections, a resource definition section and a tenant definition section. The resource definition section defines which resources should be used. There should be at least the resource user and karana, since these are the two core resources. For more complex projects one can also choose other resources related to technical maintenance of karana or pay as you go. A resource definition section for one resource looks like in Listing \ref{listing:configuration.py}.
+\lstset{language=Python}  
+\begin{lstlisting}[caption={Example for a resource definiton in the \textit{src/configuration.py} file, here for the user resource},label={listing:configuration.py}]
+users = 
+{
+  'metadata': 
+  {
+    'res_table_id': 1,\
+    'schema': 
+    {
+      'entry_create_schema': "UserSchema",\
+      'entry_import_schema': "UserDbSchema"
+	},\
+    'name': "users",\
+    'unique_schema_fields': ['uuid', 'email'],\
+    'credentials_login_field': 'email',\
+  }\
+}
+\end{lstlisting}
+A resource definition is a python dictionary, holding one key, \textsc{metadata}. The description of each of the subkeys is stored in Table \ref{table:configuration.py} and in the list on \textsc{schema} below.
+\begin{table}
+\begin{tabular}{ p{3cm}| p{4cm} | p{4cm} }
+	key & description & note \\\hline
+	 \textsc{res\_table\_id} & the unique id of a resource description & this is an artifact and not used in the code \\\hline
+	\textsc{name} & the name of a resource  & resources must be plural \\	\hline
+	\textsc{unique} \textsc{\_schema\_fields} & a list of resource attributes which need to be unique  & needs to be a list  \\\hline
+	\textsc{credentials\_login} \textsc{\_field} & the  resource attribute  used for login in  & is \textsc{None} if resource is not allowed to login, needs to be in \textsc{unique\_schema\_fields}  \\\hline
+\end{tabular}
+\caption{Keys of a resource definition}\label{table:configuration.py}
+\end{table}
+The \textsc{schema} divides into two further keys. Since in the configuration file only meta information is stored one needs to link the resource to the actual model. How to write a model for a resource will be explained later in Subsection \ref{subsection:marshmallow}. Some models are already written, for example the user model. The  \textsc{schema} tells the API which models to used. The models are defined explicitly in the file \textit{src/schema.py}.
+\begin{itemize}
+	\item \textsc{entry\_create\_schema}: This is the scheme for creation. During creation some attributes are set by the creator (e.g. for user: email, name) and some are created by the system (e.g. for user: uuid, created\_at). So only the presence of the non system created attributes is checked, i.e. is an email an email, is the length of a password sufficient etc.
+	\item \textsc{entry\_import\_schema}: This is the scheme for import. When importing a resource to make it accessible it is checked if all entries are present and have the defined properties, e.g. length, is email etc. This is used always when the API is started and is especially important when migrating one data set to another API instance.
+\end{itemize}
+An example for the tenant definition section is Listing \ref{listing:configuration.py:tenant}
+\begin{lstlisting}[caption={Example for a tenant definiton in the \textit{src/configuration.py} file},label={listing:configuration.py:tenant}]
+api_metadata = 
+{
+  'tenant_id': 'SMNTYQIUB4YTC',
+  'tenant_customer_name': 'Bintumani e.V.',
+  'tenant_login_credentials_resource': 'users',
+  'tenant_login_credentials_field': 'credentials', 
+  'tenant_used_login_credentials': ['login', 'pwhash'],
+  'logging_config_file': 'src/logging.yaml',
+  'db_dump': 
+  {
+    'table_db_path': "storage/table_db.json",\
+    'table_meta_db_path': "storage/tablestate_db.json",
+    'table_db_folder': "storage/",
+  }
+}
+\end{lstlisting}
+\subsection{REST Endpoints: How to use them?}\label{subsection:endpoints}
+This subsection deals with the endpoint description. The basic concept is generic. So for each resource there are the same endpoints present. The endpoints are written with Hug as mentioned before and are defined in the file \textit{src/main.py}. This file is also the file which is called when starting the API. \textbf{Note:} one important advantage of using Hug is having the possibility of serving different endpoints. An endpoint version is defined inside the Hug decorator (decorators are Python specific and start with an @). 
+\subsubsection{Resource Endpoints}
+There are five standard endpoints for each resource. They are described in Table \ref{table:endpoints}. They can be used to get, create change, and delete resources. If you send a body the body needs to be a JSON with one key \textsc{data} holding a string which is a JSON. For example using the HTTP library \href{https://httpie.org/}{httpie}:\\
+\begin{tcolorbox}
+http post http://localhost:8000/v1/users/new\\
+data='\{"name":"Micha","role":"admin","email":"micha@all.de",\\"credentials":\{"login":"micha@all.de","password":"12345"\}\}'
+\end{tcolorbox}
+\begin{table}
+	\begin{tabular}{ p{2cm}| p{4cm} | p{5cm} }
+		HTTP Verb & Endpoint & Description \\\hline\hline
+		GET & \textsc{v\{nr\}/\{resname\}/\{resid\}} & if \textsc{resid} is not present it returns all resource if it is present it returns this resource \\\hline
+		POST & \textsc{v\{nr\}/\{resname\}/new}  & this creates a new resource  \\	\hline
+		POST & \textsc{v\{nr\}/\{resname\}/login}  & this generates a token to use the endpoints see also Subsection \ref{subsubsection:auth} \\	\hline
+		PUT &\textsc{v\{nr\}/\{resname\}/\{resid\}} & this updates a resource needs at least two changes with given id \\\hline
+		PATCH & \textsc{v\{nr\}/\{resname\}/\{resid\}}  & this modifies a resource only one change with given id\\\hline
+		DELETE & \textsc{v\{nr\}/\{resname\}/\{resid\}} &  this deletes a resource with given id \\
+	\end{tabular}
+	\caption{Endpoint description for a resource}\label{table:endpoints}
+\end{table}
+\subsubsection{Java Web Tokens and Authentication}\label{subsubsection:auth}
+The authentication and authorization is managed through \href{https://github.com/jpadilla/pyjwt}{JWT}. If a loginable resource (this is a resource having credentials and a role like the  user resource) once to login it sends its credentials to the appropriate login endpoint (see also Table \ref{table:endpoints}). In return it gets a JSON web token (JWT) holding decrypted information on the creation of the token, which resource id it belongs to, and which role this resource has. This token needs to be send as a bearer in the authorization header of each HTTP request. The Hug framework provides middleware for authentication which decodes the token and confirms that it is valid to use the requested endpoints. The role can limit the number of endpoints, e.g. someone who can see the users may not be allowed to modify them. An example request looks like this:
+\begin{tcolorbox}
+	http POST http://localhost:8000/v1/users/login user=micha@ex.de password=Mypassword
+\end{tcolorbox}
+An response would look like this:
+\begin{tcolorbox}
+HTTP/1.0 200 OK\\
+Date: Thu, 02 Mar 2017 16:54:24 GMT\\
+Server: WSGIServer/0.2 CPython/3.5.2\\
+access-control-allow-headers: content-type\\
+access-control-allow-origin: http://localhost:3000\\
+content-length: 185\\
+content-type: application/json\\
+
+"\{\\
+\textbackslash"results\textbackslash": [\\
+\{\textbackslash"token\textbackslash": \\
+\textbackslash"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.\\
+eyJsb2dpbm5hbWUiOiJtaWNoYUBle\\
+C5kZSIsImRhdGEiOnsicm9sZSI6ImFkbWluIn19.\\
+Fx9txrY2nBXOKG7BVTYIWEpW2nrPhmjEEu8UUC4TVGE\textbackslash"\}]\\
+\}"
+\end{tcolorbox}
+
+\subsubsection{Syncing the API }
+\subsection{Marshmallow and Model Creation  }\label{subsection:marshmallow}
+
+\subsection{Database: JSON Dumps and GitPython}
+
+\subsection{InfluxDBWrapper and GrafanaWrapper: Configuring Remotely}
+
+\subsection{Py.test and Test Driven Development}
+
+\subsection{JournalCTL and logging}
