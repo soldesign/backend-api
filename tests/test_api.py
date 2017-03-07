@@ -26,6 +26,22 @@ uuid = "0"
 uuid2 = "0"
 token = ''
 
+
+def test_create_user_without_token():
+    userdict = {
+        'data': '{"name":"Micha","role":"admin","email":"mic@all.de","credentials":{"login":"mic@all.de","password":"12345"}}'}
+    user = json.dumps(userdict)
+    client.request("POST", "/v1/users/new/", user, header)
+    resp = client.getresponse()
+    assert not resp.status < 300
+
+
+def test_get_auth_token_with_wrong_pw():
+    client.request("POST", "/v1/users/login", '{"user":"admin@example.com","password":"admin2"}', headers=header)
+    resp = client.getresponse()
+    assert resp.status >= 400
+
+
 def test_get_auth_token():
     client.request("POST", "/v1/users/login", '{"user":"admin@example.com","password":"admin"}', headers=header)
     resp = client.getresponse()
@@ -37,8 +53,6 @@ def test_get_auth_token():
     global header
     header = TestHTTP.__get_header__(auth='bearer', token=token, content_type="application/json")
     print(token)
-
-
 
 
 def test_get_user_fail():

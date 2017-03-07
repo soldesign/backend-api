@@ -89,21 +89,24 @@ class JWTWrapper():
 
         if tokenpayload == None:
             tokenpayload = self.__generate_login_payload__(resname)
-
+        cred_field = api_metadata['tenant_login_credentials_field']
+        pass_field = api_metadata['tenant_used_login_credentials'][1]
+        login_field = api_metadata['tenant_used_login_credentials'][0]
         login_field = self.__db__.main_state['table_meta']['resConfig'][res]['metadata']['credentials_login_field']
         log.debug('login field: ' + str(login_field))
         try:
             """This should fail if the user does not exist"""
             res_table = self.__db__.main_state['uniqueness_index'][res][login_field]
             log.debug('res: ' + str(res_table[resname]))
+
             hashed_input_pw = self.__generate_pw_hash__(password,
-                                                        salt=res_table[resname]['credentials']['password'][:19])
+                                                        salt=res_table[resname][cred_field][pass_field][:19])
             log.debug('hash of submitted pw: ' + str(hashed_input_pw))
         except:
             return False
 
         try:
-            if hashed_input_pw == res_table[resname]['credentials']['password']:
+            if hashed_input_pw == res_table[resname][cred_field][pass_field]:
                 uuid = res_table[resname]['uuid']
                 log.debug('uuid: ' + str(uuid))
                 generated_token = jwt.encode(payload={'loginname': resname, \
