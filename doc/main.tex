@@ -19,13 +19,13 @@
 %	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
 %----------------------------------------------------------------------------------------
 
-\documentclass[
+\documentclass[draft=false,
 10pt, % Main document font size
 a4paper, % Paper type, use 'letterpaper' for US Letter paper
 oneside, % One page layout (no page indentation)
 %twoside, % Two page layout (page indentation for binding and different headers)
 headinclude,footinclude, % Extra spacing for the header and footer
-BCOR5mm, % Binding correction
+ % Binding correction
 ]{scrartcl}
 
 \input{structure.tex} % Include the structure.tex file which specified the document structure and layout
@@ -66,9 +66,9 @@ BCOR5mm, % Binding correction
 
 \tableofcontents % Print the table of contents
 
-\listoffigures % Print the list of figures
 
-\listoftables % Print the list of tables
+
+
 
 %----------------------------------------------------------------------------------------
 %	ABSTRACT
@@ -97,147 +97,74 @@ Karana is a project with the aim of developing a cheap, open source monitoring f
 
 The KBE is an IT solution for monitoring data. The KBE provides an IT infrastructure suitable for multiple independent projects on one server, but can also be enrolled separately on different servers for each project. 
 
-The infrastructure relies on several virtual machines managed by \href{https://linuxcontainers.org/lxd/}{LXD}. All incoming requests to the server are directed to a load balancer which forwards the requests based on availability to one of two load balancer which distribute the requests to the correct instances of a project. The load balancing is realized with \href{http://www.haproxy.org/}{HAproxy}. An instance is composed of three LXD containers holding an influxDB instance, a Grafana instance and an manage mentAPI instance. Having a plain Linux (tested on Xenial, Ubuntu 16.04) server with only python installed (a dependency for Ansible) the Ansible script will deploy the IT infrastructure visualized in Figure \ref{figure:infrastructrue} almost automatically. 
+The infrastructure relies on several virtual machines managed by \href{https://linuxcontainers.org/lxd/}{LXD}. All incoming requests to the server are directed to a load balancer which forwards the requests based on availability to one of two load balancer which distribute the requests to the correct instances of a project. The load balancing is realized with \href{http://www.haproxy.org/}{HAproxy}. An instance is composed of three LXD containers holding an influxDB instance, a Grafana instance and an management API instance. Having a plain Linux (tested on Xenial, Ubuntu 16.04) server with only python installed (a dependency for Ansible) the Ansible script will deploy the IT infrastructure visualized in Figure \ref{figure:infrastructrue} almost automatically. 
 
 \begin{figure}
 	\centering 
 	\begin{tikzpicture}
+	\draw[dotted] (-2.5,0.5) node {HTTP Requests};	
+	\draw[decoration={markings,mark=at position 1 with {\arrow[scale=3]{>}}},
+	postaction={decorate},] (-1,0.5) -- (0,0.5);
 	\draw (0,0) -- (0,1) -- (2,1) -- (2,0) -- (0,0) ;
 	\draw[dotted] (1,0.5) node {Haproxy};	
 	\draw (3,1) -- (3,2) -- (5,2) -- (5,1) -- (3,1) ;
 	\draw[dotted] (4,1.5) node {Haproxy1};	
 	\draw (3,-1) -- (3,0) -- (5,0) -- (5,-1) -- (3,-1) ;
 	\draw[dotted] (4,-0.5) node {Haproxy2};	
-	\draw (6,0) -- (6,1) -- (8,1) -- (8,0) -- (6,0) ;
+	\draw (7,0.75) -- (7,1.25) -- (9,1.25) -- (9,0.75) -- (7,0.75) ;	
+	\draw[dotted] (8,1) node {InfluxDB};	
+	\draw (7,0.25) -- (7,0.75) -- (9,0.75) -- (9,0.25) -- (7,0.25) ;
+	\draw[dotted] (8,0.5) node {Grafana};	
+	\draw (7,-0.25) -- (7,0.25) -- (9,0.25) -- (9,-0.25) -- (7,-0.25) ;
+	\draw[dotted] (8,0) node {API};	
+	\draw (6.75,-0.25) -- (6.75,1.25) -- (7,1.25) -- (7,-0.25) -- (6.75,-0.25) ;
+	\draw[dotted] (6.875,0.5) node {1};	
+	\draw[decoration={markings,mark=at position 1 with {\arrow[scale=3]{>}}},
+	postaction={decorate},] (2.1,0.6) -- (2.9,1.4);
+	\draw[decoration={markings,mark=at position 1 with {\arrow[scale=3]{>}}},
+	postaction={decorate},] (2.1,0.4) -- (2.9,-0.4);
+	\draw (5.1,1.4) -- (6,0.5) -- (5.1,-0.4);
+	\draw[decoration={markings,mark=at position 1 with {\arrow[scale=3]{>}}},
+	postaction={decorate},] (6,0.5) -- (6.75,0.5);
+	\draw (7,3.75) -- (7,4.25) -- (9,4.25) -- (9,3.75) -- (7,3.75) ;	
+	\draw[dotted] (8,4) node {InfluxDB};	
+	\draw (7,3.25) -- (7,3.75) -- (9,3.75) -- (9,3.25) -- (7,3.25) ;
+	\draw[dotted] (8,3.5) node {Grafana};	
+	\draw (7,3.75) -- (7,3.25) -- (9,3.25) -- (9,2.75) -- (7,2.75) ;
+	\draw[dotted] (8,3) node {API};	
+	\draw (6.75,2.75) -- (6.75,4.25) -- (7,4.25) -- (7,2.75) -- (6.75,2.75) ;
+	\draw[dotted] (6.875,3.5) node {2};	
+	\draw[decoration={markings,mark=at position 1 with {\arrow[scale=3]{>}}},
+	postaction={decorate},] (6,0.5) -- (6.75,3.5);
+	\draw[decoration={markings,mark=at position 1 with {\arrow[scale=3]{>}}},
+	postaction={decorate},] (6,0.5) -- (6.75,2);
+	\draw[dotted] (7,2) node {.....};
+
 	\end{tikzpicture}
 	\caption[KBE IT infrastructure]{The Karana Back End IT infrastructure} % The text in the square bracket is the caption for the list of figures while the text in the curly brackets is the figure caption
 	\label{figure:infrastructrue}
 \end{figure}
+
+The next sections will explain  the architecture of the IT infrastructure and how to build it with Ansible. After that we will discuss the software design of the management API and how to use the API. 
  
 %----------------------------------------------------------------------------------------
-%	METHODS
+%	Deployment
 %----------------------------------------------------------------------------------------
 
-\section{Methods}
-
-Reference to Figure~\vref{fig:gallery}. % The \vref command specifies the location of the reference
-
+\section{Building the Infrastructure}
+\input{files/deploy.tex}
 
 
-\lipsum[5] % Dummy text
+\section{Configuring an Instance}\label{section:instance}
+\input{files/instance.tex}
 
-\begin{enumerate}[noitemsep] % [noitemsep] removes whitespace between the items for a compact look
-\item First item in a list
-\item Second item in a list
-\item Third item in a list
-\end{enumerate}
-
-%------------------------------------------------
-
-\subsection{Paragraphs}
-
-\lipsum[6] % Dummy text
-
-\paragraph{Paragraph Description} \lipsum[7] % Dummy text
-
-\paragraph{Different Paragraph Description} \lipsum[8] % Dummy text
-
-%------------------------------------------------
-
-\subsection{Math}
-
-\lipsum[4] % Dummy text
-
-\begin{equation}
-\cos^3 \theta =\frac{1}{4}\cos\theta+\frac{3}{4}\cos 3\theta
-\label{eq:refname2}
-\end{equation}
-
-\lipsum[5] % Dummy text
-
-\begin{definition}[Gauss] 
-To a mathematician it is obvious that
-$\int_{-\infty}^{+\infty}
-e^{-x^2}\,dx=\sqrt{\pi}$. 
-\end{definition} 
-
-\begin{theorem}[Pythagoras]
-The square of the hypotenuse (the side opposite the right angle) is equal to the sum of the squares of the other two sides.
-\end{theorem}
-
-\begin{proof} 
-We have that $\log(1)^2 = 2\log(1)$.
-But we also have that $\log(-1)^2=\log(1)=0$.
-Then $2\log(-1)=0$, from which the proof.
-\end{proof}
 
 %----------------------------------------------------------------------------------------
-%	RESULTS AND DISCUSSION
+%	Management API
 %----------------------------------------------------------------------------------------
 
-\section{Results and Discussion}
-
-\lipsum[10] % Dummy text
-
-%------------------------------------------------
-
-\subsection{Subsection}
-
-\lipsum[11] % Dummy text
-
-\subsubsection{Subsubsection}
-
-\lipsum[12] % Dummy text
-
-\begin{description}
-\item[Word] Definition
-\item[Concept] Explanation
-\item[Idea] Text
-\end{description}
-
-\lipsum[12] % Dummy text
-
-\begin{itemize}[noitemsep] % [noitemsep] removes whitespace between the items for a compact look
-\item First item in a list
-\item Second item in a list
-\item Third item in a list
-\end{itemize}
-
-\subsubsection{Table}
-
-\lipsum[13] % Dummy text
-
-\begin{table}[hbt]
-\caption{Table of Grades}
-\centering
-\begin{tabular}{llr}
-\toprule
-\multicolumn{2}{c}{Name} \\
-\cmidrule(r){1-2}
-First name & Last Name & Grade \\
-\midrule
-John & Doe & $7.5$ \\
-Richard & Miles & $2$ \\
-\bottomrule
-\end{tabular}
-\label{tab:label}
-\end{table}
-
-Reference to Table~\vref{tab:label}. % The \vref command specifies the location of the reference
-
-%------------------------------------------------
-
-\subsection{Figure Composed of Subfigures}
-
-Reference the figure composed of multiple subfigures as Figure~\vref{fig:esempio}. Reference one of the subfigures as Figure~\vref{fig:ipsum}. % The \vref command specifies the location of the reference
-
-\lipsum[15-18] % Dummy text
-
-\begin{figure}[tb]
-\centering
-\caption[A number of pictures.]{A number of pictures with no common theme.} % The text in the square bracket is the caption for the list of figures while the text in the curly brackets is the figure caption
-\label{fig:esempio}
-\end{figure}
+\section{Managment API}
+\input{files/api.tex}
 
 %----------------------------------------------------------------------------------------
 %	BIBLIOGRAPHY

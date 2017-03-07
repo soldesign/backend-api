@@ -27,6 +27,10 @@ dottedtoc % Dotted lines leading to the page numbers in the table of contents
 ]{classicthesis} % The layout is based on the Classic Thesis style
 
 \usepackage{tikz}
+\usetikzlibrary{arrows}
+\usetikzlibrary{decorations.markings}
+
+
 
 \usepackage{arsclassica} % Modifies the Classic Thesis package
 
@@ -46,6 +50,28 @@ dottedtoc % Dotted lines leading to the page numbers in the table of contents
 \usepackage{amsmath,amssymb,amsthm} % For including math equations, theorems, symbols, etc
 
 \usepackage{varioref} % More descriptive referencing
+
+
+\usepackage{listings}             % Include the listings-package
+
+\usepackage{enumitem}
+
+\usepackage[most]{tcolorbox}
+
+\tcbset{
+	frame code={}
+	center title,
+	left=0pt,
+	right=0pt,
+	top=0pt,
+	bottom=0pt,
+	colback=gray!70,
+	colframe=white,
+	width=\dimexpr\textwidth\relax,
+	enlarge left by=0mm,
+	boxsep=5pt,
+	arc=0pt,outer arc=0pt,
+}
 
 %----------------------------------------------------------------------------------------
 %	THEOREM STYLES
