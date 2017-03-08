@@ -9,8 +9,11 @@ class GrafanaWrapper(DBHTTPSetup):
 
     def register_datasource(self, uuid, password):
         parser = self.__get_parser__()
-        body = "{\"name\":\"" + uuid + "\",\"type\":\"influxdb\",\"url\":\"https://" + \
-               parser.get('influxdb','host') + ":" + parser.get('influxdb', 'port') +\
+        ssl = 'http'
+        if parser.get('influxdb', 'ssl') == 'True':
+            ssl = 'https'
+        body = "{\"name\":\"" + uuid + "\",\"type\":\"influxdb\",\"url\":\"" + ssl +"://" + \
+               parser.get('grafana','influxdomain') + ":80"  +\
                 "\",\"access\":\"direct\",\"isDefault\":true,\"database\":\"" + uuid + \
                "\",\"user\":\"" + uuid + "\",\"password\":\"" + password + "\"}"
         resp = self.__send_post_request__(body, 'datasources')

@@ -133,6 +133,7 @@ class KaranaDBWrapper(object):
         # sanitatized import, consistency checks and repair/migration of old databases needed
         # resourceConfig[res_id]['name'] need to fit in a schema (a-z,A-Z,0-9)
         log.debug("Schema Index " + str(self.schema_index))
+        log.debug('this is how the load tables look like' + str(self.pre_tables))
         table_import_schema = self.schema_index[table_name]['entry_import_schema']
         if table_name in self.pre_tables:
             db_table_state = self.pre_tables[table_name]
@@ -389,7 +390,7 @@ class KaranaDBWrapper(object):
             if errors:
                 log.error('There were erros while importing: ' + errors)
             resdict = dict(schema_class().dump(new_res).data)
-            if self.__check_uniqueness_index__(table,resdict):
+            if self.__check_uniqueness_index__(table,   resdict):
                 self.tables[table][resdict['uuid']] = resdict
             else:
                 raise

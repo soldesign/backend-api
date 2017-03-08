@@ -69,6 +69,7 @@ class GitWrapper(object):
         """This function commits changes should be called after every write"""
         try:
             log.debug('loading git repo')
+            os.environ['PATH'] = os.environ['PATH'] + ':' + '/root/api/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin'
             repo = git.Repo(self.table_db_folder)
             repo.git.add('.')
             repo.git.commit(m='committing database json')
@@ -79,3 +80,6 @@ class GitWrapper(object):
         except git.GitCommandError:
             log.debug('empy commit nothing changed')
             return True
+        except Exception as e:
+            log.error('Something went wrong while commiting ',e)
+            return False

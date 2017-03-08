@@ -18,7 +18,7 @@ class DBHTTPSetup(object):
         parser.read('config.ini')
         return parser
 
-    def __conn_setup__(self, ssl=True):
+    def __conn_setup__(self, ssl=False):
         """This establishes a connection to influxDB which can be used to send requests to the influxdb instance"""
         self.log.info('Setup Connection')
         parser = self.__get_parser__()
@@ -143,8 +143,8 @@ class InfluxDBWrapper(DBHTTPSetup):
         except json.JSONDecodeError:
             self.log.error('No JSON came back from the get request to influx DB')
             return 400
-        except Exception:
-            self.log.error('The POST Request did not succeed, Status: ' )
+        except Exception as e:
+            self.log.error('The POST Request did not succeed, Status: ', e )
             return 400
 
     def __send_insert_request__(self, db, data, user=None, password=None):
