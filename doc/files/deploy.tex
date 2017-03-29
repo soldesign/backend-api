@@ -1,8 +1,14 @@
 \subsection{LXD and Virtual Machines}
 
+LXD was chosen as "Virtualization Platform", because it has a very small amount of infrastructure needed for its usage. Any other container solution (Kubernetes, OpenVZ, Docker...) and even full virtualization solutions (KVM, HyperV, Xen...) can be used as well.
+But LXD can be used even within small vServer instances and are therefore a good choice in smaller setups. This setup leads to a lot of containers (at least three for every customer), which helps later to balance them between different hosts and decouple the systems of the customers.
+
 
 \subsection{HAproxy and Load Balancing}
 
-
+Because a malformed configuration of HAproxy may stop the HAproxy-service, the first outer HAproxy is configured with static simple configuration which sends the traffic to at least two different HAproxy behind it. Those second level Balancers can be taken out of production and updated with a new configuration. This method allows on the fly configuration changes without affecting the running production setup.
+This second level balancers do the routing to the right containers and TLS termination.
+Later those balancing services may run even on different hosts, to assure a higher availability.
 
 \subsection{Achieving Higher Availability}
+Even if our single services (Influxdb, KBE and Grafana) are not setup with an HA-schema, but as single instances, a monitoring of the instances may create „new“ containers with restored backups on the fly. Our Karana data collection devices do have mostly bad internet connection, so they need to be resilient on this aspect anyway. Which meeans that even downtimes of several minutes should not affect the system.

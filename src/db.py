@@ -75,7 +75,7 @@ class KaranaDBWrapper(object):
         log.debug("check if the json dumps exist and if not create them and then load them")
         self.gitwrapper = GitWrapper(self.dump_files)
         self.__check_json_dumps__()
-        self.__load_pre_main_state__()
+        self.__load_pre_main_state__() # if this returns false an earlier version could be checked out from the gitwrapper and then imported again
 
         log.debug("This is how the main_state looks right now: " + str(self.main_state))
 
