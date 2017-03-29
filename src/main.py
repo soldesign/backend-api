@@ -29,7 +29,8 @@ def process_cors(request, response):
         response.set_header('Access-Control-Allow-Methods', 'POST')
     elif request.get_header('Access-Control-Request-Method') == 'PUT':
         response.set_header('Access-Control-Allow-Methods', 'PUT')
-    response.set_header('Access-Control-Allow-Headers', 'content-type')
+    response.set_header('Access-Control-Allow-Headers', 'content-type, authorization')
+
 
 
 @hug.get('/{resources}/{resource_id}/', version=1, requires=token_key_authentication)

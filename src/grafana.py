@@ -10,10 +10,12 @@ class GrafanaWrapper(DBHTTPSetup):
     def register_datasource(self, uuid, password):
         parser = self.__get_parser__()
         ssl = 'http'
+        port = 80
         if parser.get('influxdb', 'ssl') == 'True':
             ssl = 'https'
+            port = 443
         body = "{\"name\":\"" + uuid + "\",\"type\":\"influxdb\",\"url\":\"" + ssl +"://" + \
-               parser.get('grafana','influxdomain') + ":80"  +\
+               parser.get('grafana','influxdomain') + ":" + str(port) +\
                 "\",\"access\":\"direct\",\"isDefault\":true,\"database\":\"" + uuid + \
                "\",\"user\":\"" + uuid + "\",\"password\":\"" + password + "\"}"
         resp = self.__send_post_request__(body, 'datasources')

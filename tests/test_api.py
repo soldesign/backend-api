@@ -95,7 +95,7 @@ def test_check_if_karana_config_was_created():
     results = json.loads(json.loads(tmp))
     password = results['results'][0][uuid2]['config']['password']
     assert wrapper.get_last_timepoint(uuid, 'config', uuid2, uuid2, password) \
-           == '%influxcluster1.me-soldesign.com:443%data%' + \
+           == '%influxcluster2.me-soldesign.com:443%data%' + \
               uuid + '%' + password + \
               '%10%30%6%'
 
