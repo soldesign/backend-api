@@ -68,6 +68,7 @@ class SynchInflux(object):
         self.log.info(
             'Update Karana config of: ' + karana_id + ' of user ' + user_id + ' with credentials ' + str(config))
         parser = self.__get_parser__()
+        # TODO this needs to be checked if correct for configuration
         config_str = '%' + parser.get('influxdb', 'host') + ':' + parser.get('influxdb', 'port') + '%' + \
                      config['series'] + '%' + \
                      user_id + '%' + \
