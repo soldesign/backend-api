@@ -12,13 +12,13 @@ Make yourself familiar:
 5. Read http://www.hug.rest/ to make yourself familiar with the framework hug.
 6. Install pycharme or an editor of your choice to open the project (backend-api).
 7. find the file which includes the endpoints
-Tasks: 
+*Tasks: 
 1. What is the files name?
 2. List the endpoints and its HTTP verbs.
 3. What is a python decorator?
 4. Try to explain the decorators of each method.
 5. Add an extra GET endpoint /my/first/endpoint which return: “Hello World!”
-6. Restart the API, use httpie and call your endpoint, confirm that the endpoint is working.
+6. Restart the API, use httpie and call your endpoint, confirm that the endpoint is working.*
 
 Lets check on Influx Communication:
 8. Find the file which handles the communication with influxDB.
