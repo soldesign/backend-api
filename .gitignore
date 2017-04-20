@@ -1,4 +1,6 @@
 *.pyc
+.~*
+stepbysteplearntheapi.odt
 .idea
 **/venv
 **/db.json
