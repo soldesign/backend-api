@@ -18,7 +18,7 @@ class DBHTTPSetup(object):
         parser.read('config.ini')
         return parser
 
-    def __conn_setup__(self, ssl=False):
+    def __conn_setup__(self, ssl=True):
         """This establishes a connection to influxDB which can be used to send requests to the influxdb instance"""
         self.log.info('Setup Connection')
         parser = self.__get_parser__()
