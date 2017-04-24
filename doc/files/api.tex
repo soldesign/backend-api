@@ -5,9 +5,9 @@ The API is written in Python using the \href{http://www.hug.rest/}{Hug} framewor
 For the rest of this Section we assume that the reader has cloned the git repository \href{http://gitlab.me-soldesign.com/karana/backend-api.git}{Git:KBE}. This means that references to files are always with respect to the base folder of the project. 
 
 \subsection{Configuration}
-Configuring the API is fairly simple if one has the credentials of the associated influxDB and Grafana instances. Ideally the configuration of the API is done by configuring the instance as described in Section \ref{section:instance}. For completeness we will show how to configure the API by hand. 
+Configuring the API is fairly simple if one has the credentials of the associated InfluxDB and Grafana instances. Ideally the configuration of the API is done by configuring the instance as described in Section \ref{section:instance}. For completeness we will show how to configure the API by hand. 
 
-There are basically two files which need modification for configuration, the \textit{config.ini} file which holds the information for the credentials of the influxDB and the Grafana instance and the \textit{src/configuration.py} file which holds information on what models are used.
+There are basically two files which need modification for configuration, the \textit{config.ini} file which holds the information for the credentials of the InfluxDB and the Grafana instance and the \textit{src/configuration.py} file which holds information on what models are used.
 %------------------------------------------------
 
 \subsubsection{The \textit{config.ini} File}
@@ -33,11 +33,11 @@ port = 8000
 user = test
 pass = test
 \end{lstlisting}
-One needs to specify the host, the port, the user, and a password. 
+One needs to specify the host, the port, the user, and a password. If one uses the IT infrastructure described in Section \ref{section:infrastructure} it might be necessary to also specify the external host. The IP's used here are the once of the internal LXD network which resides on 10.0.12.*.
 
-\subsubsection{The \textit{src/configuration.py} File}
+\subsubsection{The \textit{src/configuration.py} File}\label{subsubsection:configuration.py}
 
-For an example  of a \textit{src/configuration.py} file see the project repository. In general there are two sections, a resource definition section and a tenant definition section. The resource definition section defines which resources should be used. There should be at least the resource user and karana, since these are the two core resources. For more complex projects one can also choose other resources related to technical maintenance of karana or pay as you go. A resource definition section for one resource looks like in Listing \ref{listing:configuration.py}.
+For an example  of a \textit{src/configuration.py} file see the project repository. In general there are two sections, a resource definition section and a tenant definition section. The resource definition section defines which resources should be used. There should be at least the resource user and karana, since these are the two core resources. For more complex projects one can also choose other resources related to technical maintenance of karana or pay-as-you-go (PAYG). A resource definition section for one resource looks like in Listing \ref{listing:configuration.py}.
 \lstset{language=Python}  
 \begin{lstlisting}[caption={Example for a resource definiton in the \textit{src/configuration.py} file, here for the user resource},label={listing:configuration.py}]
 users = 
@@ -69,10 +69,10 @@ A resource definition is a python dictionary, holding one key, \textsc{metadata}
 \end{table}
 The \textsc{schema} divides into two further keys. Since in the configuration file only meta information is stored one needs to link the resource to the actual model. How to write a model for a resource will be explained later in Subsection \ref{subsection:marshmallow}. Some models are already written, for example the user model. The  \textsc{schema} tells the API which models to used. The models are defined explicitly in the file \textit{src/schema.py}.
 \begin{itemize}
-	\item \textsc{entry\_create\_schema}: This is the scheme for creation. During creation some attributes are set by the creator (e.g. for user: email, name) and some are created by the system (e.g. for user: uuid, created\_at). So only the presence of the non system created attributes is checked, i.e. is an email an email, is the length of a password sufficient etc.
-	\item \textsc{entry\_import\_schema}: This is the scheme for import. When importing a resource to make it accessible it is checked if all entries are present and have the defined properties, e.g. length, is email etc. This is used always when the API is started and is especially important when migrating one data set to another API instance.
+	\item \textsc{entry\_create\_schema}: This is the schema for creation. During creation some attributes are set by the creator (e.g. for user: email, name) and some are created by the system (e.g. for user: uuid, created\_at). So only the presence of the non system created attributes is checked, i.e. is an email an email, is the length of a password sufficient etc.
+	\item \textsc{entry\_import\_schema}: This is the schema for import. When importing a resource to make it accessible it is checked if all entries are present and have the defined properties, e.g. length, is email etc. This is used always when the API is started and is especially important when migrating one data set to another API instance.
 \end{itemize}
-An example for the tenant definition section is Listing \ref{listing:configuration.py:tenant}
+An example for the tenant definition section is Listing \ref{listing:configuration.py:tenant}.
 \begin{lstlisting}[caption={Example for a tenant definiton in the \textit{src/configuration.py} file},label={listing:configuration.py:tenant}]
 api_metadata = 
 {
@@ -134,14 +134,136 @@ C5kZSIsImRhdGEiOnsicm9sZSI6ImFkbWluIn19.\\
 Fx9txrY2nBXOKG7BVTYIWEpW2nrPhmjEEu8UUC4TVGE\textbackslash"\}]\\
 \}"
 \end{tcolorbox}
+To use this to do a success full request one needs to take that token and put into the Authorization header of the HTTP request, for example:
+\begin{tcolorbox}
+http GET http://localhost:8000/v1/users/ Authorization:"bearer\\ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.\\
+eyJsb2dpbm5hbWUiOiJtaWNoYUBle\\
+C5kZSIsImRhdGEiOnsicm9sZSI6ImFkbWluIn19.\\
+Fx9txrY2nBXOKG7BVTYIWEpW2nrPhmjEEu8UUC4TVGE"
+\end{tcolorbox}
+With response:
+\begin{tcolorbox}
+HTTP/1.0 200 OK\\
+Date: Thu, 02 Mar 2017 16:54:46 GMT\\
+Server: WSGIServer/0.2 CPython/3.5.2\\
+access-control-allow-headers: content-type\\
+access-control-allow-origin: http://localhost:3000\\
+content-length: 472\\
+content-type: application/json\\
 
-\subsubsection{Syncing the API }
+"\{\textbackslash"results\textbackslash": [\\
+\{\textbackslash"4e1fcc06-7ccc-4b81-be93-e7bae73daf2a\textbackslash": \\
+\{\textbackslash"credentials\textbackslash":\\ 
+\{\textbackslash"password\textbackslash":\\ \textbackslash"\$6\$tZPL4iZZV5Idmnfy\$jACMfQGZLun176F.\\
+LOaV46g.ea4YI2LWkl.uOlvJ.LhY62cqLbQE9zp7CmNMXltIm0/\\qbLrzIUTd/FeppRENd1\textbackslash",\\
+\textbackslash"login\textbackslash": \textbackslash"micha@ex.de\textbackslash"\},\\ 
+\textbackslash"uuid\textbackslash": \textbackslash"4e1fcc06-7ccc-4b81-be93-e7bae73daf2a\textbackslash",\\
+\textbackslash"created\_at\textbackslash": \textbackslash"2017-03-02T15:26:11.767166+00:00\textbackslash",\\
+\textbackslash"email\textbackslash": \textbackslash"micha@ex.de\textbackslash",\\
+\textbackslash"password\_influx\textbackslash": \textbackslash"UUTQAMMMLZ0Z3RTK\textbackslash",\\
+\textbackslash"role\textbackslash": \textbackslash"admin\textbackslash",\\
+\textbackslash"karanas\textbackslash": [],\\
+\textbackslash"name\textbackslash": \textbackslash"Micha\textbackslash"\\
+\}\}]\}"
+\end{tcolorbox}
+\subsubsection{Syncing the API }\label{subsubsection:sync}
+There is one more endpoint this endpoint is triggered when sending a HTTP Post request to the endpoint, the endpoint is described in Table \ref{table:syncing}.
+\begin{table}
+	\begin{tabular}{ p{2cm}| p{4cm} | p{5cm} }
+		HTTP Verb & Endpoint & Description \\\hline\hline
+		POST & \textsc{v\{nr\}/sync/all/db}  & triggers the syncing process with the other instance  \\	
+	\end{tabular}
+	\caption{Endpoint for syncing with the db}\label{table:syncing}
+\end{table}
+Each time a new resource is created, updated or modified it is noted as being not in sync. When sending a POST request against the endpoint in Table \ref{table:syncing} each resource which is not in sync is synchronized. Resources that need syncing are karanas and users. The users and karanas are synced with the Grafana and InfluxdDB instance associated with the API. This enables karanas to be configured and send data into InfluxDB. ANd it enables to visualize data with Grafana by connecting the karana with the Grafana instance.
+
 \subsection{Marshmallow and Model Creation  }\label{subsection:marshmallow}
+\href{http://marshmallow.readthedocs.io/en/latest/}{Marshmallow} is a helpful tool to validate data models. Each resource (e.g. user, karana) has certain properties. For example a user has an id, a name, an email, credentials etc. and a karana has an id, a name, a configuration, an owner etc. These properties have certain dimensions, for example a password has a minimal length, an email a certain format, the id is of type uuid version 4. These dimension need to be checked to prevent the database from being corrupted, for this validation we use Marshmallow twice. Once for  checking the properties when a resource is created and once when a resource is imported. The difference between these two processes is that during creation an uuid is generated while during import an uuid needs to be already present. 
+The models are defined in \textit{src/schema.py}. An example is Listing \ref{listing:userschema}. The \textsc{ResourceSchema} is meant for creation and the \textsc{ResourceDBSchema} is meant for import, as can be seen by the distribution of the required attribute. 
+\begin{lstlisting}[caption={Example for a marshmallow scheme, here user},label={listing:userschema}]
+class UserSchema(Schema):
+  uuid = fields.UUID(dump_only=True)
+  name = fields.Str(required=True)
+  email = fields.Email(required=True)
+  password_influx = fields.Str()
+  credentials = fields.Nested(CredentialsSchema, many=False)
+  created_at = fields.DateTime(dump_only=True)
+  role = fields.Str()
+  karanas = fields.List(fields.UUID(), validate=validate.Length(max=1000))
+
+  @post_load
+  def make_user(self, data):
+    return User(**data)
+
+
+class UserDbSchema(Schema):
+  uuid = fields.UUID(required=True, dump_only=True)
+  name = fields.Str(required=True)
+  email = fields.Email(required=True)
+  password_influx = fields.Str(required=True)
+  credentials = fields.Nested(CredentialsSchema, required=True, many=False)
+  created_at = fields.DateTime(required=True, dump_only=True)  
+  role = fields.Str(required=True)  
+  karanas = fields.List(fields.UUID(), validate=validate.Length(max=1000),
+  required=True)  
+\end{lstlisting}
+Each schema also has a model class associated with it. When creating a resource this is called through the \textsc{post\_load} decorator. Such a user class is shown in Listing \ref{listing:usermodel}. As one can see on initialization a date and an uuid version for are created. Furthermore, a random string generator is called to generate a password. When a resource is created a Python dictionary of the resource is created and stored. Note that in this example \textsc{credentials} is also a scheme having a model class. This can be used to nest schemes.
+\begin{lstlisting}[caption={Example for a marshmallow scheme, here user},label={listing:usermodel}]
+class User(object):
+  def __init__(self, name, email, credentials, role='client'):
+    self.uuid = uuid.uuid4()
+    self.name = name
+    self.credentials = Credential(**credentials)
+    self.email = email
+    self.password_influx = id_generator()
+    self.created_at = dt.datetime.now()
+    self.role = role
+    self.karanas = []  
+\end{lstlisting}
+
+If one wants to add a new model one need to write three class, two marshmallow schemes for creation and import and one model for actually getting a python object. Once one has done that one needs to add the resource to the configuration file as described in Subsection \ref{subsubsection:configuration.py}. When the API is started one then can use the endpoints described in Subsection \ref{subsection:endpoints}. 
 
 \subsection{Database: JSON Dumps and GitPython}
+The database is always in memory while the API is running. This design is chosen due to the multi tenant concept. This means since each project gets its own infrastructure the total size of the database will not be big. If one day this becomes an issue we need to replace this approach by a postgresSQL solution. Every time the database is changed it is writen to the hard disc (the location is specified in Listing ref{listing:configuration.py:tenant} by the keyword \textsc{table\_db\_folder}, see Subsection \ref{subsubsection:configuration.py}). When written to the hard disc the Python library \href{https://github.com/gitpython-developers/GitPython}{GitPython} is used to stage and commit the changes and if wanted pushed to a remote. This is automatically the backup system of the database. 
 
-\subsection{InfluxDBWrapper and GrafanaWrapper: Configuring Remotely}
+The file handling all of this is \textit{src/db.py}.
+\begin{itemize}
+	\item What will be dumped? \\
+		We dump all resources and the associated configuration defining the resources.
+	\item When do we read from the database? \\
+		Only when the API is started the dumped file is read into memory. When this is done a validation check see Subsection \ref{subsection:marshmallow} is performed to check if data is corrupted. This means especially that reading in production is looking up in a Python directory.
+	\item How does the state in memory looks like?
+		The main state is an attribute of the class \textsc{KaranaDBWrapper} in \textit{src/db.py} and called \textsc{main\_state}. There are several keys in the main state. This is described in Table \ref{table:mainstate}. Only the values behind the keys \textsc{tables} and \textsc{tables\_meta} are written to disc and versionized.
+\end{itemize}
 
+\begin{table}
+	\begin{tabular}{ p{3cm}| p{8cm}  }
+		Key  & Description \\\hline\hline
+		\textsc{metadata} & this is right now an artifact \\\hline	
+		\textsc{tables} & holds the actual data of the resources  \\\hline	
+		\textsc{tables\_meta} & holds the metadata of the resources as specified in \textit{src/configuration.py} \\\hline	
+		\textsc{uuid\_index} & this is right now an artifact \\\hline	
+		\textsc{uniqueness\_index} & this holds for each unique field in the resource definition in \textit{src/configuration.py} defined in \textsc{unique\_schema\_fields}, this helps to access resource tables through there unique fields \\\hline	
+		\textsc{sync\_state} & this holds a list of each resource with a boolean indicating if the resource is in sync with the InfluxDB and Grafana instance, see also Subsection \ref{subsubsection:sync}\\\hline	
+		\textsc{credentials\_index} & this is right now an artifact \\\hline	
+	\end{tabular}
+	\caption{Description of the main state of the in memory database of the API}\label{table:mainstate}
+\end{table}
+
+
+\subsection{InfluxDBWrapper and GrafanaWrapper: Configuring Remotely}\label{subsection.wrapper}
+The syncing process relies on communication with the Grafana and the InfluxDB instance configured as described in Subsection \ref{subsubsection:configuration.py}. For that we wrote two Python wrappers which are used in the syncing process described in Subsection \ref{subsubsection:sync}. These to wrappers rely on the standard Python library for sending HTTP requests. Building the HTTP request is taken care of and the wrapper offer several functions to simplify communication with the other instances. The wrappers are stored in
+\begin{itemize}
+	\item \textsc{GrafanaWrapper}: \textit{src/grafana.py}
+	\item \textsc{InfluxDBWrapper}: \textit{src/influx.py}, including the HTTP preparation class \textsc{DBHTTPSetup}
+\end{itemize}
+
+These wrappers are used to perform idempotent syncing through the class \textsc{SynchInflux} in \textit{src/synch.py}. This class offers methods which check of a certain action needs to be performs and it offers methods which perform the action if the check fails. 
 \subsection{Py.test and Test Driven Development}
-
+The folder \textit{tests/} holds several tests which can used by the Test Driven Development framework \href{https://wiki.python.org/moin/PyTest}{Py.Test}. An example call could be
+\begin{tcolorbox}
+	py.test-3.5 -vvvs tests/
+\end{tcolorbox}
+The tests include testing the wrappers from Subsection \ref{subsection.wrapper} and tests the Authentication from Subsection \ref{subsubsection:auth} and the Endpoints for the resources user and karana described in Subsection \ref{subsection:endpoints}.
 \subsection{JournalCTL and logging}
+The file \textit{src/logger.py} provides logging to log files but also to \href{https://www.freedesktop.org/software/systemd/man/journalctl.html}{journalCTL}. How to log including verbosity (INFO, DEBUG, ERRORS etc.) can be defined through the YAML file \text{src/logging.yaml}. There is a template called \text{src/logging.yaml.sample}. If no specification is given there will only be simple logging to the system logs.
