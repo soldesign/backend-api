@@ -26,6 +26,22 @@ uuid = "0"
 uuid2 = "0"
 token = ''
 
+
+def test_create_user_without_token():
+    userdict = {
+        'data': '{"name":"Micha","role":"admin","email":"mic@all.de","credentials":{"login":"mic@all.de","password":"12345"}}'}
+    user = json.dumps(userdict)
+    client.request("POST", "/v1/users/new/", user, header)
+    resp = client.getresponse()
+    assert not resp.status < 300
+
+
+def test_get_auth_token_with_wrong_pw():
+    client.request("POST", "/v1/users/login", '{"user":"admin@example.com","password":"admin2"}', headers=header)
+    resp = client.getresponse()
+    assert resp.status >= 400
+
+
 def test_get_auth_token():
     client.request("POST", "/v1/users/login", '{"user":"admin@example.com","password":"admin"}', headers=header)
     resp = client.getresponse()
@@ -37,8 +53,6 @@ def test_get_auth_token():
     global header
     header = TestHTTP.__get_header__(auth='bearer', token=token, content_type="application/json")
     print(token)
-
-
 
 
 def test_get_user_fail():
@@ -81,7 +95,7 @@ def test_check_if_karana_config_was_created():
     results = json.loads(json.loads(tmp))
     password = results['results'][0][uuid2]['config']['password']
     assert wrapper.get_last_timepoint(uuid, 'config', uuid2, uuid2, password) \
-           == '%influxcluster1.me-soldesign.com:443%data%' + \
+           == '%influxcluster2.me-soldesign.com:443%data%' + \
               uuid + '%' + password + \
               '%10%30%6%'
 

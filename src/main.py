@@ -19,17 +19,15 @@ db = KaranaDBWrapper()
 jwtoken = JWTWrapper(db)
 token_key_authentication = hug.authentication.token(jwtoken.token_verify)
 
-origin = 'http://localhost:3000'
+origin = 'http://tonnyssandbox.karana-desktop-1.mei'
 
 @hug.request_middleware()
 def process_cors(request, response):
     log.info('This is how the request looks like:' + request.method)
     response.set_header('Access-Control-Allow-Origin', origin)
-    if request.get_header('Access-Control-Request-Method') == 'POST':
-        response.set_header('Access-Control-Allow-Methods', 'POST')
-    elif request.get_header('Access-Control-Request-Method') == 'PUT':
-        response.set_header('Access-Control-Allow-Methods', 'PUT')
-    response.set_header('Access-Control-Allow-Headers', 'content-type')
+    response.set_header('Access-Control-Allow-Methods', 'POST, PUT, GET, PATCH, DELETE')
+    response.set_header('Access-Control-Allow-Headers', 'content-type, authorization')
+
 
 
 @hug.get('/{resources}/{resource_id}/', version=1, requires=token_key_authentication)

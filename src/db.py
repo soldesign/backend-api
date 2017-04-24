@@ -75,7 +75,7 @@ class KaranaDBWrapper(object):
         log.debug("check if the json dumps exist and if not create them and then load them")
         self.gitwrapper = GitWrapper(self.dump_files)
         self.__check_json_dumps__()
-        self.__load_pre_main_state__()
+        self.__load_pre_main_state__()  # if this returns false an earlier version could be checked out from the gitwrapper and then imported again
 
         log.debug("This is how the main_state looks right now: " + str(self.main_state))
 
@@ -133,6 +133,7 @@ class KaranaDBWrapper(object):
         # sanitatized import, consistency checks and repair/migration of old databases needed
         # resourceConfig[res_id]['name'] need to fit in a schema (a-z,A-Z,0-9)
         log.debug("Schema Index " + str(self.schema_index))
+        log.debug('this is how the load tables look like' + str(self.pre_tables))
         table_import_schema = self.schema_index[table_name]['entry_import_schema']
         if table_name in self.pre_tables:
             db_table_state = self.pre_tables[table_name]
@@ -194,7 +195,6 @@ class KaranaDBWrapper(object):
         if not self.gitwrapper.check_table_meta_file_exists():
             self.gitwrapper.create_table_meta_file()
 
-
     ########################################### synch db with harddisc and influx! ##############
 
 
@@ -230,7 +230,7 @@ class KaranaDBWrapper(object):
                         log.debug('Config = ' + str(config))
                         password = config['password']
                         user_id = self.tables['karanas'][uuid]['owner']
-                        if not synch.check_karana_read(user_id, uuid, password) or not\
+                        if not synch.check_karana_read(user_id, uuid, password) or not \
                                 synch.check_karana_write(user_id, uuid, password):
                             if not synch.register_karana(user_id, uuid, password):
                                 raise
@@ -242,7 +242,7 @@ class KaranaDBWrapper(object):
                     except Exception as e:
                         log.debug('Synching Karana ' + uuid + 'with the influx failed', e)
                         return False
-        if self.sync_state['sync']:
+        if not self.sync_state['sync']:
             self.__dump_main_state__()
         return True
 
@@ -357,9 +357,6 @@ class KaranaDBWrapper(object):
                 return False
         return True
 
-
-
-
     ####################################### public methods for the endpoints ##########################
 
     def get_res_by_id(self, table: str, uuid: str):
@@ -389,7 +386,7 @@ class KaranaDBWrapper(object):
             if errors:
                 log.error('There were erros while importing: ' + errors)
             resdict = dict(schema_class().dump(new_res).data)
-            if self.__check_uniqueness_index__(table,resdict):
+            if self.__check_uniqueness_index__(table, resdict):
                 self.tables[table][resdict['uuid']] = resdict
             else:
                 raise

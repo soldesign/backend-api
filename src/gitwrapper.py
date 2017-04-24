@@ -1,5 +1,6 @@
 """This class checks if the configuration for the meta data already exists and establishes version control for the backup"""
 import os.path
+import os
 from configuration import resources as resourceConfig
 import json
 import git
@@ -55,17 +56,20 @@ class GitWrapper(object):
 
     def create_git_repo(self):
         try:
-            log.debug('creating git repo')
+            log.debug('creating git repo' )
+            os.environ['PATH'] = os.environ['PATH'] + ':' + '/root/api/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin'
+            log.debug('check if git is seen: ' + os.environ['PATH'])
             git.Repo.init(self.table_db_folder)
             return True
-        except:
-            log.error('couldnt create git repo')
+        except Exception as e:
+            log.error('couldnt create git repo', e)
             return False
 
     def commit_changes(self):
         """This function commits changes should be called after every write"""
         try:
             log.debug('loading git repo')
+            os.environ['PATH'] = os.environ['PATH'] + ':' + '/root/api/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin'
             repo = git.Repo(self.table_db_folder)
             repo.git.add('.')
             repo.git.commit(m='committing database json')
@@ -76,3 +80,6 @@ class GitWrapper(object):
         except git.GitCommandError:
             log.debug('empy commit nothing changed')
             return True
+        except Exception as e:
+            log.error('Something went wrong while commiting ',e)
+            return False
