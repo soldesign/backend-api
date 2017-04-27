@@ -7,7 +7,8 @@ For the rest of this Section we assume that the reader has cloned the git reposi
 \subsection{Configuration}
 Configuring the API is fairly simple if one has the credentials of the associated InfluxDB and Grafana instances. Ideally the configuration of the API is done by configuring the instance as described in Section \ref{section:instance}. For completeness we will show how to configure the API by hand. 
 
-There are basically two files which need modification for configuration, the \textit{config.ini} file which holds the information for the credentials of the InfluxDB and the Grafana instance and the \textit{src/configuration.py} file which holds information on what models are used.
+There are basically two files which need modification for configuration, the \textit{config.ini} file which holds the information for the credentials of the InfluxDB and the Grafana instance and the \textit{src/configuration.py} file which holds information on what models are used. \\
+\textbf{Note:} The \textit{config.ini} file can be configured with ansible scripts if needed. 
 %------------------------------------------------
 
 \subsubsection{The \textit{config.ini} File}
@@ -113,8 +114,9 @@ data='\{"name":"Micha","role":"admin","email":"micha@all.de",\\"credentials":\{"
 \subsubsection{Java Web Tokens and Authentication}\label{subsubsection:auth}
 The authentication and authorization is managed through \href{https://github.com/jpadilla/pyjwt}{JWT}. If a loginable resource (this is a resource having credentials and a role like the  user resource) once to login it sends its credentials to the appropriate login endpoint (see also Table \ref{table:endpoints}). In return it gets a JSON web token (JWT) holding decrypted information on the creation of the token, which resource id it belongs to, and which role this resource has. This token needs to be send as a bearer in the authorization header of each HTTP request. The Hug framework provides middleware for authentication which decodes the token and confirms that it is valid to use the requested endpoints. The role can limit the number of endpoints, e.g. someone who can see the users may not be allowed to modify them. An example request looks like this:
 \begin{tcolorbox}
-	http POST http://localhost:8000/v1/users/login user=micha@ex.de password=Mypassword
+	http POST http://localhost:8000/v1/users/login user=admin@example.com password=admin
 \end{tcolorbox}
+\textbf{Note:} In test mode the API creates an admin user with the above credentials.
 An response would look like this:
 \begin{tcolorbox}
 HTTP/1.0 200 OK\\
@@ -224,7 +226,7 @@ class User(object):
 If one wants to add a new model one need to write three class, two marshmallow schemes for creation and import and one model for actually getting a python object. Once one has done that one needs to add the resource to the configuration file as described in Subsection \ref{subsubsection:configuration.py}. When the API is started one then can use the endpoints described in Subsection \ref{subsection:endpoints}. 
 
 \subsection{Database: JSON Dumps and GitPython}
-The database is always in memory while the API is running. This design is chosen due to the multi tenant concept. This means since each project gets its own infrastructure the total size of the database will not be big. If one day this becomes an issue we need to replace this approach by a postgresSQL solution. Every time the database is changed it is writen to the hard disc (the location is specified in Listing ref{listing:configuration.py:tenant} by the keyword \textsc{table\_db\_folder}, see Subsection \ref{subsubsection:configuration.py}). When written to the hard disc the Python library \href{https://github.com/gitpython-developers/GitPython}{GitPython} is used to stage and commit the changes and if wanted pushed to a remote. This is automatically the backup system of the database. 
+The database is always in memory while the API is running. This design is chosen due to the multi tenant concept. This means since each project gets its own infrastructure the total size of the database will not be big. If one day this becomes an issue we need to replace this approach by a postgreSQL solution. Every time the database is changed it is written to the hard disc (the location is specified in Listing \ref{listing:configuration.py:tenant} by the keyword \textsc{table\_db\_folder}, see Subsection \ref{subsubsection:configuration.py}). When written to the hard disc the Python library \href{https://github.com/gitpython-developers/GitPython}{GitPython} is used to stage and commit the changes and if wanted pushed to a remote. This is automatically the backup system of the database. 
 
 The file handling all of this is \textit{src/db.py}.
 \begin{itemize}
@@ -258,7 +260,7 @@ The syncing process relies on communication with the Grafana and the InfluxDB in
 	\item \textsc{InfluxDBWrapper}: \textit{src/influx.py}, including the HTTP preparation class \textsc{DBHTTPSetup}
 \end{itemize}
 
-These wrappers are used to perform idempotent syncing through the class \textsc{SynchInflux} in \textit{src/synch.py}. This class offers methods which check of a certain action needs to be performs and it offers methods which perform the action if the check fails. 
+These wrappers are used to perform idempotent syncing through the class \textsc{SynchInflux} in \textit{src/synch.py}. This class offers methods which check if a certain action needs to be performs and it offers methods which perform the action if the check fails. 
 \subsection{Py.test and Test Driven Development}
 The folder \textit{tests/} holds several tests which can used by the Test Driven Development framework \href{https://wiki.python.org/moin/PyTest}{Py.Test}. An example call could be
 \begin{tcolorbox}
