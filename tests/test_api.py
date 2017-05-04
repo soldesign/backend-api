@@ -18,7 +18,7 @@ from influx import InfluxDBWrapper
 
 # from seed import user1
 command = ['bash', './run.sh']
-pro = subprocess.Popen(['./run.sh'],# stdout=subprocess.PIPE,
+pro = subprocess.Popen(['./run.sh'], shell=True,  # stdout=subprocess.PIPE,
                        preexec_fn=os.setsid)
 time.sleep(15)
 
