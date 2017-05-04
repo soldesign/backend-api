@@ -8,6 +8,8 @@ import json
 import logging
 import subprocess
 import time
+import os
+import signal
 
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(myPath, '../src'))
@@ -16,8 +18,11 @@ from influx import InfluxDBWrapper
 
 # from seed import user1
 command = ['bash', './run.sh']
-p = subprocess.Popen(['./run.sh'])  # process.wait(timeout=None)
-time.sleep(30)
+pro = subprocess.Popen(['./run.sh'], stdout=subprocess.PIPE,
+                       preexec_fn=os.setsid)
+time.sleep(15)
+
+
 TestHTTP = DBHTTPSetup(db='test')
 client = TestHTTP.__conn_setup__(ssl=False)
 header = TestHTTP.__get_header__(content_type="application/json")
@@ -136,6 +141,8 @@ def test_remove_created_user_and_karana():
     client.request("DELETE", "/v1/karanas/" + uuid2, headers=header)
     resp = client.getresponse()
     assert resp.status < 300
-    p.terminate()
+    global pro
+    #os.killpg(os.getpgid(pro.pid), signal.SIGTERM)
+
 
 
