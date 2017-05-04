@@ -4,4 +4,4 @@ before_script:
 
 pytest:
   script:
-    -  py.test-3.5 -vvvs tests/
+    -  py.test -vvvs tests/
