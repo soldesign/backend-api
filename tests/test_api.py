@@ -20,7 +20,7 @@ from influx import InfluxDBWrapper
 command = ['bash', './run.sh']
 pro = subprocess.Popen(['./run.sh'], shell=True,  # stdout=subprocess.PIPE,
                        preexec_fn=os.setsid)
-time.sleep(15)
+time.sleep(50)
 
 
 TestHTTP = DBHTTPSetup(db='test')
