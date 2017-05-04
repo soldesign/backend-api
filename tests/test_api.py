@@ -18,7 +18,7 @@ from influx import InfluxDBWrapper
 
 # from seed import user1
 command = ['bash', './run.sh']
-pro = subprocess.Popen(['./run.sh'], stdout=subprocess.PIPE,
+pro = subprocess.Popen(['./run.sh'],# stdout=subprocess.PIPE,
                        preexec_fn=os.setsid)
 time.sleep(15)
 
@@ -142,7 +142,7 @@ def test_remove_created_user_and_karana():
     resp = client.getresponse()
     assert resp.status < 300
     global pro
-    #os.killpg(os.getpgid(pro.pid), signal.SIGTERM)
+    os.killpg(os.getpgid(pro.pid), signal.SIGTERM)
 
 
 
