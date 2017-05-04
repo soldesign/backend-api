@@ -1,6 +1,7 @@
 before_script:
   - apt-get update -qq && apt-get install -y -qq python3
   - pip3 install -U pytest
+  - pip3 install hug
 
 pytest:
   script:
