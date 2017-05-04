@@ -13,7 +13,7 @@ pytest:
     -  py.test -vvvs tests/
 
 
-karana-api-dev:
-  stage: deploy
-  script:
-    - ./run.sh &
+#karana-api-dev:
+#  stage: deploy
+#  script:
+#    - ./run.sh &
