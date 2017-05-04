@@ -136,5 +136,6 @@ def test_remove_created_user_and_karana():
     client.request("DELETE", "/v1/karanas/" + uuid2, headers=header)
     resp = client.getresponse()
     assert resp.status < 300
+    p.terminate()
 
-p.terminate()
+
