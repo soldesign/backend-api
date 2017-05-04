@@ -16,8 +16,8 @@ from influx import InfluxDBWrapper
 
 # from seed import user1
 command = ['bash', './run.sh']
-#p = subprocess.Popen(['./run.sh'])  # process.wait(timeout=None)
-#time.sleep(30)
+p = subprocess.Popen(['./run.sh'])  # process.wait(timeout=None)
+time.sleep(30)
 TestHTTP = DBHTTPSetup(db='test')
 client = TestHTTP.__conn_setup__(ssl=False)
 header = TestHTTP.__get_header__(content_type="application/json")
@@ -137,4 +137,4 @@ def test_remove_created_user_and_karana():
     resp = client.getresponse()
     assert resp.status < 300
 
-#p.terminate()
+p.terminate()

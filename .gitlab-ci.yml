@@ -4,4 +4,4 @@ before_script:
 
 pytest:
   script:
-    - ./run.sh
+    -  py.test -vvvs tests/
