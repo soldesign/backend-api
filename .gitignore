@@ -7,8 +7,6 @@ stepbysteplearntheapi.odt
 **/.cache
 src/logging.yaml
 src/backup
-storage/
-**/storage
 *.aux
 *.glo
 *.idx
@@ -33,3 +31,6 @@ storage/
 *.out
 *.synctex.gz
 .DS_Store
+storage/table_db.json
+storage/tablestate_db.json
+
