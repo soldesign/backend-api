@@ -10,17 +10,12 @@ import subprocess
 import time
 import os
 import signal
-
+import pytest
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(myPath, '../src'))
 from influx import DBHTTPSetup
 from influx import InfluxDBWrapper
 
-# from seed import user1
-command = ['bash', './run.sh']
-pro = subprocess.Popen(['./run.sh'], shell=True,  # stdout=subprocess.PIPE,
-                       preexec_fn=os.setsid)
-time.sleep(50)
 
 
 TestHTTP = DBHTTPSetup(db='test')
@@ -31,6 +26,21 @@ header = TestHTTP.__get_header__(content_type="application/json")
 uuid = "0"
 uuid2 = "0"
 token = ''
+
+@pytest.fixture(scope="session", autouse=True)
+def run_around_tests(request):
+    print('In my_own_session_run_at_begin()')
+
+    pro = subprocess.Popen(['./run.sh'], shell=True,  # stdout=subprocess.PIPE,
+                           preexec_fn=os.setsid)
+    time.sleep(50)
+
+
+    # Code that will run after your test, for example:
+    def my_own_session_run_at_end():
+        os.killpg(os.getpgid(pro.pid), signal.SIGTERM)
+        print('In my_own_session_run_at_end()')
+    request.addfinalizer(my_own_session_run_at_end)
 
 
 def test_create_user_without_token():
@@ -142,7 +152,5 @@ def test_remove_created_user_and_karana():
     resp = client.getresponse()
     assert resp.status < 300
 
-time.sleep(50)
-os.killpg(os.getpgid(pro.pid), signal.SIGTERM)
 
 
