@@ -29,7 +29,7 @@ token = ''
 
 @pytest.fixture(scope="session", autouse=True)
 def run_around_tests(request):
-    print('In my_own_session_run_at_begin()')
+    print('This happens before the tests starts')
 
     pro = subprocess.Popen(['./run.sh'], shell=True,  # stdout=subprocess.PIPE,
                            preexec_fn=os.setsid)
@@ -39,7 +39,7 @@ def run_around_tests(request):
     # Code that will run after your test, for example:
     def my_own_session_run_at_end():
         os.killpg(os.getpgid(pro.pid), signal.SIGTERM)
-        print('In my_own_session_run_at_end()')
+        print('Deleted API')
     request.addfinalizer(my_own_session_run_at_end)
 
 
