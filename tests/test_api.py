@@ -33,7 +33,7 @@ def run_around_tests(request):
 
     pro = subprocess.Popen(['./run.sh'], shell=True,  # stdout=subprocess.PIPE,
                            preexec_fn=os.setsid)
-    time.sleep(50)
+    time.sleep(90)
 
 
     # Code that will run after your test, for example:
