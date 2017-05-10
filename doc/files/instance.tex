@@ -1,4 +1,11 @@
-Having everything setup as in Section \ref{section:infrastructure} to create an instance for a project is now fairly simple.
+Having everything setup as in Section \ref{section:infrastructure} to create an instance for a project is now fairly simple. The scripts introduced here will install influxDB, Grafana, the API, and a simple frontent on your target server. Once installed, the containers can be reached via the following URLs, note that right now SSL is not implemented:
+\begin{itemize}
+	\item InfluxDB API: \nolinkurl{http://<project-name>influx.<your-server-domain-name>}
+	\item InfluxDB Admin Panel: \nolinkurl{http://<project-name>influxa.<your-server-domain-name>}	
+	\item Grafana: \nolinkurl{http://<project-name>grafana.<your-server-domain-name>}
+	\item Karana API: \nolinkurl{http://<project-name>api.<your-server-domain-name>}
+	\item Frontend: \nolinkurl{http://<project-name>.<your-server-domain-name>}
+\end{itemize}
 \textbf{Note (again):} All the paths in here are relative to the base folder of this gitlab project backend-deploy as in Section \ref{section:infrastructure}.
 
 \subsection{Configuration}
@@ -62,3 +69,25 @@ Now run the command to set up the API container
 \begin{tcolorbox}
 	\$	ansible-playbool api.yml -u root
 \end{tcolorbox}
+
+This
+\begin{itemize}
+	\item installs virtualenv, python3-pip, build-essential, libssl-dev, libffi-dev, python3-dev, nginx and git on the container with the API IP
+	\item copys the code in the path\_b variable of the \textit{playbook/tenant\_var.yml} into the api container
+	\item copys the \textit{files/templates/<projectname>\_config.ini} to the right location (thats how the API knows what influxDB and Grfana instance to use)
+	\item installs the requirements of the API in a virtual environment
+	\item makes a systemd service to host the API with gunicorn and nginx
+	\item adds the instance to the two parallel HAproxys
+\end{itemize}
+
+\subsection{Setup API Container}
+Now run the command to set up the simple Frontend written in react.js container
+\begin{tcolorbox}
+	\$	ansible-playbool frontend\_react.yml.yml -u root
+\end{tcolorbox}
+
+This
+\begin{itemize}
+	\item copys the static webpage to \textit{/var/www/html/} on the target server
+	\item adds the instance to the two parallel HAproxys
+\end{itemize}
