@@ -1,14 +1,86 @@
-\subsection{LXD and Virtual Machines}
+This section introduces the underlying IT infrastructure. It first gives some comments on the used components LXD and HAproxy and then describes how to set it up running Ansible scripts. The script for that can be found on our Gitlab page (Projectname: backend-deploy).\\
+\textbf{Note:} All the paths in here are relative to the base folder of this gitlab project.
+
+\subsection{Description of the Infrastructure}
+
+\subsubsection{LXD and Virtual Machines}
 
 LXD was chosen as "Virtualization Platform", because it has a very small amount of infrastructure needed for its usage. Any other container solution (Kubernetes, OpenVZ, Docker...) and even full virtualization solutions (KVM, HyperV, Xen...) can be used as well.
 But LXD can be used even within small vServer instances and are therefore a good choice in smaller setups. This setup leads to a lot of containers (at least three for every customer), which helps later to balance them between different hosts and decouple the systems of the customers.
 
 
-\subsection{HAproxy and Load Balancing}
-
-Because a malformed configuration of HAproxy may stop the HAproxy-service, the first outer HAproxy is configured with static simple configuration which sends the traffic to at least two different HAproxy behind it. Those second level Balancers can be taken out of production and updated with a new configuration. This method allows on the fly configuration changes without affecting the running production setup.
+\subsubsection{HAproxy and Load Balancing}\label{subsubsection:haproxys}
+HAproxy works as the guard for the IT infrastructure. Every HTTP request made to the server is processed by HAproxy and deligated to the appropriate lxd container in the virtual network.
+Since a malformed configuration of HAproxy may stop the HAproxy-service, the first outer HAproxy is configured with static simple configuration which sends the traffic to at least two different HAproxy behind it. Those second level Balancers can be taken out of production and updated with a new configuration. This method allows on the fly configuration changes without affecting the running production setup.
 This second level balancers do the routing to the right containers and TLS termination.
 Later those balancing services may run even on different hosts, to assure a higher availability.
 
-\subsection{Achieving Higher Availability}
+\subsubsection{Achieving Higher Availability}
 Even if our single services (Influxdb, KBE and Grafana) are not setup with an HA-schema, but as single instances, a monitoring of the instances may create „new“ containers with restored backups on the fly. Our Karana data collection devices do have mostly bad internet connection, so they need to be resilient on this aspect anyway. Which meeans that even downtimes of several minutes should not affect the system.
+
+\subsection{Build the infrastructure with Ansible scripts}
+To roll out the backend one only needs to configure Ansible properly, install python 2 on the target server and run the Ansible scripts \textit{playbook/lxd.yml}. and \textit{playbook/haproxy.yml}
+
+\subsubsection{Configure Ansible}
+The following steps need to be done to configure Ansible. You need a local Linux computer with Python Pip installed and a (target) server with a domain name (tested with Ubuntu Xenial on the target server). 
+\begin{itemize}
+	\item[1] Install Ansible, e.g. with \href{http://docs.ansible.com/ansible/intro_installation.html#latest-releases-via-pip}{pip}
+	\item[2] Create your ansible hosts file, see also \textit{playbook/hosts} and Listing \ref{listings:ansiblehosts} where you put in the server of your domain name
+	\item[3] Copy the file to the right location
+	\begin{tcolorbox}
+		\$	cp playbook/hosts /etc/ansible/hosts
+	\end{tcolorbox}
+	\item[4] Ansible works on SSH, so you need to have SSH access to your target server, please configure SSH such that you can use it through authorized keys, to tell Ansible how this works you need to configure the file \textit{playbook/ssh.cfg} and put in your server domain name, see also Listing \ref{listings:ssh}
+	\item[5] install Python 2 on your target server
+\end{itemize}
+\begin{lstlisting}[caption={Example of Ansible hosts file},label={listings:ansiblehosts}]
+[example]
+<your-server-domain-name>
+\end{lstlisting}
+\begin{lstlisting}[caption={Example of Ansible ssh.cfg file},label={listings:ssh}]
+Host 10.0.12.*
+StrictHostKeyChecking no
+ProxyCommand ssh -o "StrictHostKeyChecking=no" root@<your-server-domain-name> -W %h:%p
+
+
+Host <your-server-domain-name>
+ForwardAgent yes
+ControlPath ~/.ssh/cm-%r@%h:%p
+ControlMaster auto
+ControlPersist 10m
+StrictHostKeyChecking no
+
+\end{lstlisting}
+The configuration of \textit{playbook/ssh.cfg} makes your target server an SSH bastion. Since we will build the virtual network in the IP space 10.0.12.* you can then directly use SSH to go to the containers on your target server. 
+
+
+\subsubsection{Run the script to set up the lxd network}
+ Then you can run in the folder \textit{playbook/} the following command
+\begin{tcolorbox}
+\$	ansible-playbool lxd.yml -u root
+\end{tcolorbox}
+
+The execution of the command takes a while but if everything goes well the script does the following:
+\begin{itemize}
+	\item creates an ssh key on the target server
+	\item installs lxd, ipython and python pip on the target server
+	\item initializes lxd on the target server
+	\item gets an image for the containers on the target server
+	\item creates a virtual network on the target server
+	\item creates for lxd containers on the target server, namely three haproxy instances and one default nginx instance
+	\item adds the four containers to the virtual network and makes them ssh accessible.
+\end{itemize}
+
+\subsubsection{Run the script to set up the HAproxys}
+The three haproxy instances need to be configured. For that there are configuration files in \textit{files/standard\_files}. The setup is as described above in Subsection \ref{subsubsection:haproxys}. The command
+\begin{tcolorbox}
+\$	ansible-playbool haproxy.yml -u root
+\end{tcolorbox}
+when executed
+\begin{itemize}
+	\item installs python on the four lxd containers
+	\item installs haproxy on the three haproxy containers
+	\item pushes the configuration files \textit{files/standard\_files/haproxy.cfg} on the central haproxy and \textit{files/standard\_files/haproxy.dist.cfg} on the two parallel haproxys
+	\item installs nginx on the fourth container
+	\item configures the iptables on the target server with the file \textit{files/standard\_files/rules.v4}, this sends all incoming requests on the ports 80, 222 and 443 to the central haproxy container
+\end{itemize}

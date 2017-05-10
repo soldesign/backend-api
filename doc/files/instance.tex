@@ -1,0 +1,64 @@
+Having everything setup as in Section \ref{section:infrastructure} to create an instance for a project is now fairly simple.
+\textbf{Note (again):} All the paths in here are relative to the base folder of this gitlab project backend-deploy as in Section \ref{section:infrastructure}.
+
+\subsection{Configuration}
+The file \textit{playbook/tenant\_var.yml} holds the variables which will be used during the execution of the Ansible scripts. An example file looks like in Listings \ref{listings:tenantvars}.
+\begin{lstlisting}[caption={Example of Ansible hosts file},label={listings:tenantvars}]
+---
+pname: <name>
+influxip: 10.0.12.101
+grafanaip: 10.0.12.102
+apiip: 10.0.12.103
+domain: <your-server-domain-name>
+path_b: ../../backend-api
+path_f_r: ../../frontend-react/karana-app-test
+influx_conf: influxdb_1_2.conf
+\end{lstlisting}
+You can give the project a name and enter your target server domain. The IP addresses are addresses in the virtual network on your target server. Make sure that they are still free. The path variables should point to the KBE base folder and to the frontend of choice. Furthermore, influxDB changes the configuration files from version to version. If the file changed again you can put in \textit{files/templates/} and change the reference in the configuration file. 
+
+\subsection{Create an Instance}
+Now in the folder \textit{playbook/} run the command
+\begin{tcolorbox}
+	\$	ansible-playbool instance.yml -u root
+\end{tcolorbox}
+This 
+\begin{itemize}
+	\item creates three influx containers (one for grafana, one for the api, one for influxDB)
+	\item adds them to the virtual network on the target server with the defined IP addresses in the file \textit{playbook/tenant\_var.yml}
+	\item pushes the authorized keys to the containers for remote access
+	\item installs python and ssh on the containers
+\end{itemize}
+So this scripts creates the raw containers to put in the three different instances.
+
+\subsection{Setup Influx Container}
+Now run the command to set up the InfluxDB container
+\begin{tcolorbox}
+	\$	ansible-playbool influx.yml -u root
+\end{tcolorbox}
+
+This
+\begin{itemize}
+	\item install influx in the container with the influx IP
+	\item adds the instance to the two parallel HAproxys by turning the first one off and then turning the second one off, the registered containers are stored in a tinyDB file (you might need to install tinyDB with pip) holding all containers, from the tinyDB entries the template \textit{playbook/templates/haproxy.dist.cfg} is configured using Jinja2 syntax
+	\item creates and admin user on the influxDB instance and writes the credentials in the file \textit{files/templates/<projectname>\_config.ini}
+\end{itemize} 
+
+\subsection{Setup Grafana Container}
+Now run the command to set up the InfluxDB container
+\begin{tcolorbox}
+	\$	ansible-playbool grafana.yml -u root
+\end{tcolorbox}
+
+This
+\begin{itemize}
+	\item installs grafana in the container with the grafana IP
+	\item Creates an Admin user for grafana and writes it into  \textit{files/templates/<projectname>\_config.ini}
+	\item copy the scripted dashboard  \textit{files/scripted\_dashboards/karanabase.js} to the Grafana instance
+	\item adds the instance to the two parallel HAproxys
+\end{itemize}
+
+\subsection{Setup API Container}
+Now run the command to set up the API container
+\begin{tcolorbox}
+	\$	ansible-playbool api.yml -u root
+\end{tcolorbox}
