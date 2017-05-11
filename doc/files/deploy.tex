@@ -1,5 +1,5 @@
 This section introduces the underlying IT infrastructure. It first gives some comments on the used components LXD and HAproxy and then describes how to set it up running Ansible scripts. The script for that can be found on our Gitlab page (Projectname: backend-deploy).\\
-\textbf{Note:} All the paths in here are relative to the base folder of this gitlab project.
+\textbf{Note:} All the paths in here are relative to the base folder of the gitlab project backend-deploy and are writte in in \textit{italic}.
 
 \subsection{Description of the Infrastructure}
 
@@ -10,13 +10,13 @@ But LXD can be used even within small vServer instances and are therefore a good
 
 
 \subsubsection{HAproxy and Load Balancing}\label{subsubsection:haproxys}
-HAproxy works as the guard for the IT infrastructure. Every HTTP request made to the server is processed by HAproxy and deligated to the appropriate lxd container in the virtual network.
+HAproxy works as the guard for the IT infrastructure. Every HTTP request made to the server is processed by HAproxy and delegated to the appropriate lxd container in the virtual network.
 Since a malformed configuration of HAproxy may stop the HAproxy-service, the first outer HAproxy is configured with static simple configuration which sends the traffic to at least two different HAproxy behind it. Those second level Balancers can be taken out of production and updated with a new configuration. This method allows on the fly configuration changes without affecting the running production setup.
 This second level balancers do the routing to the right containers and TLS termination.
 Later those balancing services may run even on different hosts, to assure a higher availability.
 
 \subsubsection{Achieving Higher Availability}
-Even if our single services (Influxdb, KBE and Grafana) are not setup with an HA-schema, but as single instances, a monitoring of the instances may create „new“ containers with restored backups on the fly. Our Karana data collection devices do have mostly bad internet connection, so they need to be resilient on this aspect anyway. Which meeans that even downtimes of several minutes should not affect the system.
+Even if our single services (Influxdb, KBE and Grafana) are not setup with an HA-schema, but as single instances, a monitoring of the instances may create „new“ containers with restored backups on the fly. Our Karana data collection devices do have mostly bad Internet connection, so they need to be resilient on this aspect anyway. Which means that even downtimes of several minutes should not affect the system.
 
 \subsection{Build the infrastructure with Ansible scripts}
 To roll out the backend one only needs to configure Ansible properly, install python 2 on the target server and run the Ansible scripts \textit{playbook/lxd.yml}. and \textit{playbook/haproxy.yml}
@@ -72,7 +72,7 @@ The execution of the command takes a while but if everything goes well the scrip
 \end{itemize}
 
 \subsubsection{Run the script to set up the HAproxys}
-The three haproxy instances need to be configured. For that there are configuration files in \textit{files/standard\_files}. The setup is as described above in Subsection \ref{subsubsection:haproxys}. The command
+The three haproxy instances need to be configured. For that there are configuration files in \textit{files/standard\_files}. The setup is as described above in Subsection \ref{subsubsection:haproxys} and shown in Figure \ref{figure:infrastructrue}. The command
 \begin{tcolorbox}
 \$	ansible-playbool haproxy.yml -u root
 \end{tcolorbox}

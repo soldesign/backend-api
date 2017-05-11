@@ -12,7 +12,7 @@ Having everything setup as in Section \ref{section:infrastructure} to create an 
 The file \textit{playbook/tenant\_var.yml} holds the variables which will be used during the execution of the Ansible scripts. An example file looks like in Listings \ref{listings:tenantvars}.
 \begin{lstlisting}[caption={Example of Ansible hosts file},label={listings:tenantvars}]
 ---
-pname: <name>
+pname: <project-name>
 influxip: 10.0.12.101
 grafanaip: 10.0.12.102
 apiip: 10.0.12.103
@@ -21,7 +21,7 @@ path_b: ../../backend-api
 path_f_r: ../../frontend-react/karana-app-test
 influx_conf: influxdb_1_2.conf
 \end{lstlisting}
-You can give the project a name and enter your target server domain. The IP addresses are addresses in the virtual network on your target server. Make sure that they are still free. The path variables should point to the KBE base folder and to the frontend of choice. Furthermore, influxDB changes the configuration files from version to version. If the file changed again you can put in \textit{files/templates/} and change the reference in the configuration file. 
+You can give the project a name and enter your target server domain. The IP addresses are addresses in the virtual network on your target server. Remember, the IP address space is 10.0.12.* and  10.0.12.220, 10.0.12.221, 10.0.12.222, and  10.0.12.223 are used for the HAproxy instances and the defualt nginx server.  Make sure that they are still free. The path variables should point to the KBE base folder and to the frontend of choice. Furthermore, influxDB changes the configuration files from version to version. If the file changed again you can put in \textit{files/templates/} and change the reference in the configuration file. 
 
 \subsection{Create an Instance}
 Now in the folder \textit{playbook/} run the command
