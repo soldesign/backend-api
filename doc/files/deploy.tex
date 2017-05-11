@@ -1,5 +1,5 @@
 This section introduces the underlying IT infrastructure. It first gives some comments on the used components LXD and HAproxy and then describes how to set it up running Ansible scripts. The script for that can be found on our Gitlab page (Projectname: backend-deploy).\\
-\textbf{Note:} All the paths in here are relative to the base folder of the gitlab project backend-deploy and are writte in in \textit{italic}.
+\textbf{Note:} All the paths in here are relative to the base folder of the gitlab project backend-deploy and are written in \textit{italic}.
 
 \subsection{Description of the Infrastructure}
 
@@ -10,7 +10,7 @@ But LXD can be used even within small vServer instances and are therefore a good
 
 
 \subsubsection{HAproxy and Load Balancing}\label{subsubsection:haproxys}
-HAproxy works as the guard for the IT infrastructure. Every HTTP request made to the server is processed by HAproxy and delegated to the appropriate lxd container in the virtual network.
+HAproxy works as the guard for the IT infrastructure. Every HTTP request made to the server is processed by HAproxy and delegated to the appropriate LXD container in the virtual network.
 Since a malformed configuration of HAproxy may stop the HAproxy-service, the first outer HAproxy is configured with static simple configuration which sends the traffic to at least two different HAproxy behind it. Those second level Balancers can be taken out of production and updated with a new configuration. This method allows on the fly configuration changes without affecting the running production setup.
 This second level balancers do the routing to the right containers and TLS termination.
 Later those balancing services may run even on different hosts, to assure a higher availability.
@@ -20,7 +20,8 @@ Even if our single services (Influxdb, KBE and Grafana) are not setup with an HA
 
 \subsection{Build the infrastructure with Ansible scripts}
 To roll out the backend one only needs to configure Ansible properly, install python 2 on the target server and run the Ansible scripts \textit{playbook/lxd.yml}. and \textit{playbook/haproxy.yml}
-
+\textbf{Note:} If an ansible-playbook command throws an error rerun the command!!
+ 
 \subsubsection{Configure Ansible}
 The following steps need to be done to configure Ansible. You need a local Linux computer with Python Pip installed and a (target) server with a domain name (tested with Ubuntu Xenial on the target server). 
 \begin{itemize}
@@ -32,6 +33,9 @@ The following steps need to be done to configure Ansible. You need a local Linux
 	\end{tcolorbox}
 	\item[4] Ansible works on SSH, so you need to have SSH access to your target server, please configure SSH such that you can use it through authorized keys, to tell Ansible how this works you need to configure the file \textit{playbook/ssh.cfg} and put in your server domain name, see also Listing \ref{listings:ssh}
 	\item[5] install Python 2 on your target server
+		\begin{tcolorbox}
+		\$	sudo apt-get install python
+	\end{tcolorbox}
 \end{itemize}
 \begin{lstlisting}[caption={Example of Ansible hosts file},label={listings:ansiblehosts}]
 [example]
@@ -51,7 +55,7 @@ ControlPersist 10m
 StrictHostKeyChecking no
 
 \end{lstlisting}
-The configuration of \textit{playbook/ssh.cfg} makes your target server an SSH bastion. Since we will build the virtual network in the IP space 10.0.12.* you can then directly use SSH to go to the containers on your target server. 
+The configuration of \textit{playbook/ssh.cfg} makes your target server an \href{http://blog.scottlowe.org/2015/11/21/using-ssh-bastion-host/}{SSH bastion}. Since we will build the virtual network in the IP space 10.0.12.* you can then directly use SSH to go to the containers on your target server. 
 
 
 \subsubsection{Run the script to set up the lxd network}
