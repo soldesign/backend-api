@@ -21,7 +21,8 @@ Even if our single services (Influxdb, KBE and Grafana) are not setup with an HA
 \subsection{Build the infrastructure with Ansible scripts}
 To roll out the backend one only needs to configure Ansible properly, install python 2 on the target server and run the Ansible scripts \textit{playbook/lxd.yml}. and \textit{playbook/haproxy.yml}
 \textbf{Note:} If an ansible-playbook command throws an error rerun the command!!
- 
+
+\textbf{IMPORTANT:} Now you should have cloned the git repository to continue, it is currently available on our gitlab page (\href{ssh://git@gitlab.me-soldesign.com:222/karana/backend-deploy.git}{click here}) .
 \subsubsection{Configure Ansible}
 The following steps need to be done to configure Ansible. You need a local Linux computer with Python Pip installed and a (target) server with a domain name (tested with Ubuntu Xenial on the target server). 
 \begin{itemize}
